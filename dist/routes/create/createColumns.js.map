@@ -1,0 +1,1 @@
+{"version":3,"file":"createColumns.js","sourceRoot":"","sources":["../../../src/routes/create/createColumns.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AACjC,OAAO,EAAE,mBAAmB,EAAE,MAAM,yCAAyC,CAAC;AAC9E,OAAO,sBAAsB,MAAM,iEAAiE,CAAC;AAErG,MAAM,MAAM,GAAG,MAAM,EAAE,CAAC;AAExB,MAAM,CAAC,IAAI,CAAC,YAAY,EAAE,mBAAmB,EAAE,sBAAsB,CAAC,CAAC;AAEvE,eAAe,MAAM,CAAC"}

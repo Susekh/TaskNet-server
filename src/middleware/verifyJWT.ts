@@ -4,7 +4,7 @@ import db from "../utils/db/db.js";
 import { NextFunction, Response, Request } from "express";
 
 interface JwtToken extends JwtPayload {
-    id: number;
+    id: string;
     username?: string;
     email?: string;
 }
@@ -37,6 +37,7 @@ export const verifyJWT = asyncHandler(async (req : Request, res : Response, next
                 id: true,
                 username: true,
                 email: true,
+                name : true,
                 createdAt: true,
                 // Exclude password and refreshToken fields
             },

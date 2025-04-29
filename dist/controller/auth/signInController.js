@@ -7,14 +7,14 @@ export const generateAccessToken = function (id, username) {
         id: id,
         username: username,
     }, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     });
 };
 export const generateRefreshToken = function (id) {
     return jwt.sign({
         id: id,
     }, process.env.REFRESH_TOKEN_SECRET, {
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     });
 };
 export const generateAccessAndRefereshTokens = async (res, user) => {
@@ -33,7 +33,12 @@ export const generateAccessAndRefereshTokens = async (res, user) => {
         res.status(500).json({
             status: "failed",
             statusCode: 500,
-            errMsgs: { otherErr: { isErr: true, msg: "can't login user :: caught at generateAccessAndRefereshTokens" } }
+            errMsgs: {
+                otherErr: {
+                    isErr: true,
+                    msg: "can't login user :: caught at generateAccessAndRefereshTokens",
+                },
+            },
         });
     }
 };
@@ -42,41 +47,69 @@ const singInController = asyncHandler(async (req, res) => {
         { field: "username", isErr: false, msg: "" },
         { field: "name", isErr: false, msg: "" },
         { field: "email", isErr: false, msg: "" },
-        { field: "password", isErr: false, msg: "" }
+        { field: "password", isErr: false, msg: "" },
     ];
     try {
         const { username, password, email } = req.body;
         console.log("at controller :: ", req.body);
         const user = await db.user.findFirst({
             where: {
-                OR: [
-                    { username: username },
-                    { email: email },
-                ],
+                OR: [{ username: username }, { email: email }],
             },
             select: {
                 id: true,
                 username: true,
                 email: true,
                 createdAt: true,
+                name: true,
                 password: true,
-                imgUrl: true
+                dob: true,
+                imgUrl: true,
+                projects: {
+                    include: {
+                        sprints: true,
+                        members: true,
+                    },
+                },
+                members: {
+                    include: {
+                        tasks: true,
+                        project: {
+                            select: {
+                                imageUrl: true,
+                                name: true,
+                                sprints: true,
+                            },
+                        },
+                        assingedIssues: true,
+                    },
+                },
+                gender: true,
             },
         });
         if (!user) {
             return res.json({
                 status: "failed",
                 statusCode: 400,
-                errMsgs: { formErr: [...formErr, { field: "username", isErr: true, msg: "User doesn't exists." }] }
+                errMsgs: {
+                    formErr: [
+                        ...formErr,
+                        { field: "username", isErr: true, msg: "User doesn't exists." },
+                    ],
+                },
             });
         }
-        ;
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return res.json({
                 status: "failed",
                 statusCode: 400,
-                errMsgs: { formErr: [...formErr, { field: "password", isErr: true, msg: "Password is incorrect." }] }
+                errMsgs: {
+                    formErr: [
+                        ...formErr,
+                        { field: "password", isErr: true, msg: "Password is incorrect." },
+                    ],
+                },
             });
         }
         const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(res, user);
@@ -85,23 +118,29 @@ const singInController = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,
             secure: true,
-            sameSite: 'none',
+            sameSite: "none",
         };
-        res.status(201)
+        res
+            .status(201)
             .cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
             .json({
             status: "success",
             statusCode: 201,
             user: user,
-            successMsg: "Logged in succesfully."
+            successMsg: "Logged in succesfully.",
         });
     }
     catch (error) {
         res.status(500).json({
             status: "failed",
             statusCode: 500,
-            errMsgs: { otherErr: { isErr: true, msg: `Server Error :: code :: ${500} :: ${error}` } }
+            errMsgs: {
+                otherErr: {
+                    isErr: true,
+                    msg: `Server Error :: code :: ${500} :: ${error}`,
+                },
+            },
         });
     }
 });

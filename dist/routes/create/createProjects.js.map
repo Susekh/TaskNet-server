@@ -1,0 +1,1 @@
+{"version":3,"file":"createProjects.js","sourceRoot":"","sources":["../../../src/routes/create/createProjects.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AACjC,OAAO,uBAAuB,MAAM,4DAA4D,CAAC;AACjG,OAAO,EAAE,mBAAmB,EAAE,MAAM,yCAAyC,CAAC;AAE9E,MAAM,MAAM,GAAG,MAAM,EAAE,CAAC;AAExB,MAAM,CAAC,IAAI,CAAC,aAAa,EAAE,mBAAmB,EAAE,uBAAuB,CAAC,CAAC;AAEzE,eAAe,MAAM,CAAC"}

@@ -1,9 +1,9 @@
-import app from "./app.js";
 import dotenv from "dotenv";
+import { server } from "./app.js";
 dotenv.config({
-    path: "./.env"
+    path: "../.env"
 });
-app.listen(process.env.PORT || 5000, () => {
+server.listen(process.env.PORT || 5000, () => {
     console.log(`Server is listening at http://localhost:${process.env.PORT}`);
 });
 //# sourceMappingURL=index.js.map

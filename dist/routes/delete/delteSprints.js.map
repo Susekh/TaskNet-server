@@ -1,0 +1,1 @@
+{"version":3,"file":"delteSprints.js","sourceRoot":"","sources":["../../../src/routes/delete/delteSprints.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AACjC,OAAO,EAAE,mBAAmB,EAAE,MAAM,yCAAyC,CAAC;AAC9E,OAAO,sBAAsB,MAAM,0DAA0D,CAAC;AAE9F,MAAM,MAAM,GAAG,MAAM,EAAE,CAAC;AAExB,MAAM,CAAC,IAAI,CAAC,iBAAiB,EAAE,mBAAmB,EAAE,sBAAsB,CAAC,CAAC;AAE5E,eAAe,MAAM,CAAC"}

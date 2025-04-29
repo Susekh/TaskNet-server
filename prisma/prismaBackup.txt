@@ -1,0 +1,197 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+//modify schema to match the data model.
+
+model User {
+  id String @id @default(uuid()) @unique
+  name String
+  username String @unique
+  password String
+  email String? @unique
+  imgUrl String?
+  dob DateTime? @db.Date
+
+  projects Project[]
+  members Member[]
+  todos Todo[]
+  tasks Task[]
+
+  gender String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  refreshToken String?
+  recoverAccount RecoverAccount?
+}
+
+model RecoverAccount {
+  id               Int      @id @default(autoincrement())
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  
+  userId           String      @unique
+  user             User     @relation(fields: [userId], references: [id])
+}
+
+
+model  Project{
+  id String @id @default(uuid())
+  name String
+  imageUrl String @db.Text
+  inviteCode String @unique
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  members Member[]
+  todos Todo[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+
+enum MemberRole {
+  ADMIN
+  MODERATOR
+  CONTRIBUTER 
+}
+
+model Member {
+  id String  @id    @default(uuid())
+  role MemberRole @default(CONTRIBUTER)
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  taskId String
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  messages Message[]
+  directMessages DirectMessage[]
+
+  conversationsInitiated Conversation[] @relation("MemberOne")
+  conversationsRecieved Conversation[] @relation("MemberTwo")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([projectId])
+}
+
+
+model Todo {
+  id String @id @default(uuid())
+  name String
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  tasks Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Task {
+  id String @id @default(uuid()) @unique
+  name String
+
+  content Json
+  deadline DateTime
+
+  asignees String?
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  todoId String
+  todo Todo @relation(fields: [todoId], references: [id], onDelete: Cascade)
+
+  members Member[]
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([todoId])
+  @@index([userId])
+}
+
+model Message {
+  id String @id @default(uuid())
+  content String @db.Text
+
+  fileUrl String? @db.Text
+
+  memberId String
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  taskId String
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  deleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
+  @@index([memberId])
+}
+
+model Conversation {
+  id String @id @default(uuid())
+
+  memberOneId String
+  memberOne Member @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
+
+  memberTwoId String
+  memberTwo Member @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
+
+  directMessages DirectMessage[]
+
+  @@index([memberTwoId])
+
+  @@unique([memberOneId, memberTwoId])
+}
+
+model DirectMessage {
+  id String @id @default(uuid())
+  content String @db.Text
+  fileUrl String? @db.Text
+
+  memberId String
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  conversationId String
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deleted Boolean @default(false)
+
+  @@index([memberId])
+  @@index([conversationId])
+}

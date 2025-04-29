@@ -21,6 +21,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
                 id: true,
                 username: true,
                 email: true,
+                name: true,
                 createdAt: true,
                 // Exclude password and refreshToken fields
             },

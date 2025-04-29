@@ -1,0 +1,1 @@
+{"version":3,"file":"deleteColumns.js","sourceRoot":"","sources":["../../../src/routes/delete/deleteColumns.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AACjC,OAAO,EAAE,mBAAmB,EAAE,MAAM,yCAAyC,CAAC;AAC9E,OAAO,sBAAsB,MAAM,iEAAiE,CAAC;AAErG,MAAM,MAAM,GAAG,MAAM,EAAE,CAAC;AAExB,MAAM,CAAC,IAAI,CAAC,gBAAgB,EAAE,mBAAmB,EAAE,sBAAsB,CAAC,CAAC;AAE3E,eAAe,MAAM,CAAC"}

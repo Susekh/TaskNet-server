@@ -2,6 +2,7 @@ import asyncHandler from "../../utils/asyncHanlder.js";
 import db from "../../utils/db/db.js";
 import bcrypt from "bcryptjs"
 import { Request, Response } from "express";
+import { v4 as uuidV4 } from "uuid";
 
 const singUpController = asyncHandler(
     async (req : Request, res : Response) => {
@@ -45,10 +46,11 @@ const singUpController = asyncHandler(
     
             const user = await db.user.create({
                 data : {
+                    id : uuidV4(),
                     username : username,
                     email : email,
                     name : name,
-                    password : hashedPassword
+                    password : hashedPassword,
                 }
             });
             
