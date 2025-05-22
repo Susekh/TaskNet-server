@@ -83,10 +83,14 @@ const initializeSocket = (server) => {
       }
     });
 
-    socket.on("sendChatMessage", async ({ conversationId, memberId, receiverId, name, message }) => {
+    socket.on("sendChatMessage", async ({ conversationId, memberId, fileUrl, receiverId, name, message }) => {
       try {
-        if (!memberId || !message) {
-          throw new Error("Missing required message data");
+        if (!memberId) {
+          throw new Error("Member ID is required");
+        }
+    
+        if (!message && !fileUrl) {
+          throw new Error("Either message content or file must be provided");
         }
         
         console.log(`Processing message from ${memberId} to ${receiverId}`);
@@ -134,7 +138,8 @@ const initializeSocket = (server) => {
         // Create the message
         const newMessage = await db.directMessage.create({
           data: {
-            content: message,
+            content: message || "",
+            fileUrl : fileUrl || null,
             memberId,
             conversationId: conversation.id
           },

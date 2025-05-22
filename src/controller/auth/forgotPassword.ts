@@ -2,8 +2,9 @@ import asyncHandler from "../../utils/asyncHanlder.js";
 import db from "../../utils/db/db.js";
 import crypto from 'crypto'
 import sendMail from "../../utils/mailSender.js";
+import { Request, Response } from "express";
 
-const forgotPassword = asyncHandler(async (req, res) => {
+const forgotPassword = asyncHandler(async (req : Request, res: Response) => {
 
     const { email } = req.body;
 

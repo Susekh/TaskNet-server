@@ -6,6 +6,8 @@ import fetchRouter from "./fetchData/fetchRouter.js"
 import deleteRouter from "./delete/deleteRoutes.js"
 import updateRouter from "./update/updateRoutes.js"
 import AddProfilesRouter from "./addProfiles/AddProfilesRouter.js"
+import uploadRouter from "./upload/upload.route.js"
+import { verifyJWTForProfile } from "../middleware/verifyJWTForProfile.js";
 
 const router = Router();
 
@@ -20,5 +22,6 @@ router.use("/fetch", fetchRouter)
 router.use("/delete", deleteRouter);
 router.use("/update", updateRouter);
 router.use("/add-profiles", AddProfilesRouter);
+router.use("/upload", verifyJWTForProfile, uploadRouter);
 
 export default router;

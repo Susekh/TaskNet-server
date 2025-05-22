@@ -107,12 +107,29 @@ const addMembersToTaskController = asyncHandler(async (req, res) => {
     }
     catch (error) {
         console.error("Error in adding members to task:", error);
+        if (isAxiosError(error)) {
+            return res.status(error.response?.status || 500).json({
+                success: false,
+                message: 'Failed to add members to the task.',
+                error: error.response?.data?.message || error.message,
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+            });
+        }
         return res.status(500).json({
             success: false,
             message: 'Something went wrong while adding members to the task.',
-            error: error.message,
+            error: error instanceof Error ? error.message : 'Unknown error',
         });
     }
+    // Type guard to check for AxiosError
+    function isAxiosError(err) {
+        return (typeof err === 'object' &&
+            err !== null &&
+            'isAxiosError' in err &&
+            err.isAxiosError === true);
+    }
 });
+;
 export default addMembersToTaskController;
 //# sourceMappingURL=addTaskMembers.js.map

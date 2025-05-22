@@ -1,9 +1,18 @@
 {
-    "compilerOptions": {
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "sourceMap": true,
-        "outDir": "dist",
-    },
-    "include": ["src/**/*"]
+  "compilerOptions": {
+    "target": "ES2020",                       // good baseline for modern Node.js
+    "module": "NodeNext",                     // needed for ESM support
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",                         // output directory
+    "rootDir": "src",                         // where your TypeScript source lives
+    "sourceMap": true,                        // helpful for debugging
+    "esModuleInterop": true,                  // enables `import express from 'express'`
+    "strict": true,                           // enable strict typing
+    "skipLibCheck": true,                     // faster builds, skip checking .d.ts from node_modules
+    "forceConsistentCasingInFileNames": true, // avoids casing bugs
+    "typeRoots": ["./types", "./node_modules/@types"], // include your custom types
+    "types": ["node"]                         // base node types
+  },
+  "include": ["src/**/*", "types/**/*"],      // include app source and custom types
+  "exclude": ["node_modules", "dist"]
 }

@@ -1,8 +1,9 @@
+import { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHanlder.js";
 import db from "../../utils/db/db.js";
 import bcrypt from 'bcryptjs'
 
-const resetPassword = asyncHandler(async (req, res) => {
+const resetPassword = asyncHandler(async (req : Request, res: Response) => {
     const { token, newPassword } = req.body;
 
     console.log(" Token and new Pass ::", token, newPassword);

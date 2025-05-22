@@ -72,10 +72,13 @@ const initializeSocket = (server) => {
                 socket.emit("error", { message: `Failed to join chat: ${err.message}` });
             }
         });
-        socket.on("sendChatMessage", async ({ conversationId, memberId, receiverId, name, message }) => {
+        socket.on("sendChatMessage", async ({ conversationId, memberId, fileUrl, receiverId, name, message }) => {
             try {
-                if (!memberId || !message) {
-                    throw new Error("Missing required message data");
+                if (!memberId) {
+                    throw new Error("Member ID is required");
+                }
+                if (!message && !fileUrl) {
+                    throw new Error("Either message content or file must be provided");
                 }
                 console.log(`Processing message from ${memberId} to ${receiverId}`);
                 // Determine the room name consistently
@@ -113,7 +116,8 @@ const initializeSocket = (server) => {
                 // Create the message
                 const newMessage = await db.directMessage.create({
                     data: {
-                        content: message,
+                        content: message || "",
+                        fileUrl: fileUrl || null,
                         memberId,
                         conversationId: conversation.id
                     },

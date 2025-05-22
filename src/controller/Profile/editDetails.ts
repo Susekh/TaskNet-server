@@ -3,7 +3,9 @@ import db from "../../utils/db/db.js";
 
 const editDetails = asyncHandler( async (req, res) => {
 
-    const { id, username , name , email } = req.body.body;
+    const { username , name , email } = req.body.body;
+    
+    const { id } =  req.user;
 
     let formErr = [
         { field: "username", isErr: false, msg: "" },
