@@ -7,14 +7,20 @@ const deleteSprintController = asyncHandler(async (req, res) => {
     const user = req.user;
 
     console.log("delete sprint body ::", req.body);
-    
+
+    if (!user) {
+      return res.status(401).json({
+        status: "failed",
+        statusCode: 401,
+        errMsgs: { otherErr: { isErr: true, msg: "Unauthorized: User not authenticated." } },
+      });
+    }
 
     try {
         const sprint = await db.sprint.findUnique({
             where: { id: sprintId },
             select: { projectId: true },
         });
-
 
         if (!sprint) {
             return res.status(404).json({
@@ -48,12 +54,18 @@ const deleteSprintController = asyncHandler(async (req, res) => {
             statusCode: 200,
             message: "Sprint deleted successfully.",
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Error deleting sprint:", error);
+
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+
         res.status(500).json({
             status: "failed",
             statusCode: 500,
-            errMsgs: { otherErr: { isErr: true, msg: `Server Error: ${error.message}` } },
+            errMsgs: { otherErr: { isErr: true, msg: `Server Error: ${errorMessage}` } },
         });
     }
 });

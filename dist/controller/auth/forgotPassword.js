@@ -1,7 +1,8 @@
 import asyncHandler from "../../utils/asyncHanlder.js";
 import db from "../../utils/db/db.js";
-import crypto from 'crypto';
+import crypto from "crypto";
 import sendMail from "../../utils/mailSender.js";
+import { ApiError } from "../../utils/apiError.js";
 const forgotPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
     try {
@@ -9,10 +10,10 @@ const forgotPassword = asyncHandler(async (req, res) => {
             where: { email },
         });
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ message: "User not found" });
         }
         // Generate reset token and expiry
-        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetToken = crypto.randomBytes(32).toString("hex");
         const resetTokenExpiry = new Date(Date.now() + 3600000); // Token valid for 1 hour
         // Check if a RecoverUser entry already exists for this user
         let recoverUser = await db.recoverAccount.findUnique({
@@ -38,15 +39,17 @@ const forgotPassword = asyncHandler(async (req, res) => {
                 },
             });
         }
-        ;
         const resetLink = `${process.env.FRONTEND_URI}/auth/reset-password/${resetToken}`;
         const mailHtml = `<p>You requested a password reset</p> 
                             <p>Click <a target="_blank" href="${resetLink}">here</a> to reset your password</p>`;
-        sendMail(user.email, 'Reset Password', mailHtml);
-        res.status(200).json({ message: 'Reset email sent' });
+        if (!user.email) {
+            throw new ApiError(400, "failed");
+        }
+        sendMail(user.email, "Reset Password", mailHtml);
+        res.status(200).json({ message: "Reset email sent" });
     }
     catch (error) {
-        res.status(404).json({ message: 'Mail not sent' });
+        res.status(404).json({ message: "Mail not sent" });
     }
 });
 export default forgotPassword;

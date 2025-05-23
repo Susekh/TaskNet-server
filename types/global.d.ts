@@ -6,7 +6,9 @@ declare global {
       id: string;
       email?: string;
       username: string;
-      role?: MemberRole; 
+      role?: MemberRole;
+      name: string;         
+      createdAt: Date;      
     }
 
     interface Request {

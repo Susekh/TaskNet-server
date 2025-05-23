@@ -12,6 +12,15 @@ const deleteProjectController = asyncHandler(async (req, res) => {
     }
     try {
         // Check if the user is a member of the project
+        if (!user) {
+            return res.status(401).json({
+                status: "failed",
+                statusCode: 401,
+                errMsgs: {
+                    otherErr: { isErr: true, msg: "Unauthorized: User not found." },
+                },
+            });
+        }
         const member = await db.member.findFirst({
             where: {
                 userId: user.id,

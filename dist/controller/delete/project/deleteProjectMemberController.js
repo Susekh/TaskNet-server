@@ -23,7 +23,15 @@ const deleteProjectMemberController = asyncHandler(async (req, res) => {
                 message: "Member not found.",
             });
         }
-        // Get the current user's role in this project
+        if (!user) {
+            return res.status(401).json({
+                status: "failed",
+                statusCode: 401,
+                errMsgs: {
+                    otherErr: { isErr: true, msg: "Unauthorized: User not found." },
+                },
+            });
+        }
         const requestingMember = await db.member.findFirst({
             where: {
                 userId: user.id,
@@ -37,8 +45,7 @@ const deleteProjectMemberController = asyncHandler(async (req, res) => {
                 message: "You are not a member of this project.",
             });
         }
-        if (requestingMember.role !== "ADMIN" ||
-            requestingMember.id === memberId) {
+        if (requestingMember.role !== "ADMIN" || requestingMember.id === memberId) {
             return res.status(403).json({
                 status: "failed",
                 statusCode: 403,

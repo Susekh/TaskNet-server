@@ -30,7 +30,8 @@ const deleteTaskController = asyncHandler(async (req, res) => {
             projectId: task.projectId,
         },
     });
-    if (!member || ![MemberRole.ADMIN, MemberRole.MODERATOR].includes(member.role)) {
+    const allowedRoles = new Set([MemberRole.ADMIN, MemberRole.MODERATOR]);
+    if (!member || !allowedRoles.has(member.role)) {
         return res.status(403).json({
             status: "failed",
             statusCode: 403,

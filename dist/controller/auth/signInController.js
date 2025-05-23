@@ -2,48 +2,36 @@ import asyncHandler from "../../utils/asyncHanlder.js";
 import db from "../../utils/db/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
+const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || "15m";
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || "7d";
+if (!ACCESS_TOKEN_SECRET || !REFRESH_TOKEN_SECRET) {
+    throw new Error("JWT secret keys are not defined in environment variables");
+}
 export const generateAccessToken = function (id, username) {
-    return jwt.sign({
-        id: id,
-        username: username,
-    }, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-    });
+    return jwt.sign({ id, username }, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
 };
 export const generateRefreshToken = function (id) {
-    return jwt.sign({
-        id: id,
-    }, process.env.REFRESH_TOKEN_SECRET, {
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-    });
+    return jwt.sign({ id }, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
 };
 export const generateAccessAndRefereshTokens = async (res, user) => {
     try {
-        console.log("user at generate :: ", user);
         const accessToken = generateAccessToken(user.id, user.username);
         const refreshToken = generateRefreshToken(user.id);
         await db.user.update({
             where: { id: user.id },
-            data: { refreshToken: refreshToken },
+            data: { refreshToken },
         });
-        console.log(`access :: ${accessToken} refresh :: ${refreshToken}`);
         return { accessToken, refreshToken };
     }
     catch (error) {
-        res.status(500).json({
-            status: "failed",
-            statusCode: 500,
-            errMsgs: {
-                otherErr: {
-                    isErr: true,
-                    msg: "can't login user :: caught at generateAccessAndRefereshTokens",
-                },
-            },
-        });
+        console.error("Error generating tokens:", error);
+        throw new Error("Failed to generate access and refresh tokens");
     }
 };
 const singInController = asyncHandler(async (req, res) => {
-    let formErr = [
+    const formErr = [
         { field: "username", isErr: false, msg: "" },
         { field: "name", isErr: false, msg: "" },
         { field: "email", isErr: false, msg: "" },
@@ -51,10 +39,21 @@ const singInController = asyncHandler(async (req, res) => {
     ];
     try {
         const { username, password, email } = req.body;
-        console.log("at controller :: ", req.body);
-        const user = await db.user.findFirst({
+        if (typeof password !== "string") {
+            return res.status(400).json({
+                status: "failed",
+                statusCode: 400,
+                errMsgs: {
+                    formErr: [
+                        ...formErr,
+                        { field: "password", isErr: true, msg: "Password is required." },
+                    ],
+                },
+            });
+        }
+        const user = (await db.user.findFirst({
             where: {
-                OR: [{ username: username }, { email: email }],
+                OR: [{ username }, { email }],
             },
             select: {
                 id: true,
@@ -65,43 +64,23 @@ const singInController = asyncHandler(async (req, res) => {
                 password: true,
                 dob: true,
                 imgUrl: true,
-                projects: {
-                    include: {
-                        sprints: true,
-                        members: true,
-                    },
-                },
-                members: {
-                    include: {
-                        tasks: true,
-                        project: {
-                            select: {
-                                imageUrl: true,
-                                name: true,
-                                sprints: true,
-                            },
-                        },
-                        assingedIssues: true,
-                    },
-                },
-                gender: true,
             },
-        });
-        if (!user) {
-            return res.json({
+        }));
+        if (!user || !user.password) {
+            return res.status(400).json({
                 status: "failed",
                 statusCode: 400,
                 errMsgs: {
                     formErr: [
                         ...formErr,
-                        { field: "username", isErr: true, msg: "User doesn't exists." },
+                        { field: "username", isErr: true, msg: "User doesn't exist." },
                     ],
                 },
             });
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res.json({
+            return res.status(400).json({
                 status: "failed",
                 statusCode: 400,
                 errMsgs: {
@@ -113,8 +92,7 @@ const singInController = asyncHandler(async (req, res) => {
             });
         }
         const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(res, user);
-        delete user.password;
-        console.log("User after db update :: ", user);
+        const { password: _, ...userWithoutPassword } = user;
         const options = {
             httpOnly: true,
             secure: true,
@@ -127,18 +105,21 @@ const singInController = asyncHandler(async (req, res) => {
             .json({
             status: "success",
             statusCode: 201,
-            user: user,
-            successMsg: "Logged in succesfully.",
+            user: userWithoutPassword,
+            successMsg: "Logged in successfully.",
         });
     }
     catch (error) {
+        let message = "Server error";
+        if (error instanceof Error)
+            message = error.message;
         res.status(500).json({
             status: "failed",
             statusCode: 500,
             errMsgs: {
                 otherErr: {
                     isErr: true,
-                    msg: `Server Error :: code :: ${500} :: ${error}`,
+                    msg: `Server Error :: code :: 500 :: ${message}`,
                 },
             },
         });

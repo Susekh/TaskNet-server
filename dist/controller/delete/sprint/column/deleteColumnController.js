@@ -16,17 +16,35 @@ const deleteColumnController = asyncHandler(async (req, res) => {
                 errMsgs: { otherErr: { isErr: true, msg: "Column not found." } },
             });
         }
+        if (!user) {
+            return res.status(401).json({
+                status: "failed",
+                statusCode: 401,
+                errMsgs: {
+                    otherErr: {
+                        isErr: true,
+                        msg: "Unauthorized: User not authenticated.",
+                    },
+                },
+            });
+        }
         const member = await db.member.findFirst({
             where: {
                 userId: user.id,
                 projectId: column.sprint.projectId,
             },
         });
-        if (!member || !(member.role === MemberRole.ADMIN || member.role === MemberRole.MODERATOR)) {
+        if (!member ||
+            !(member.role === MemberRole.ADMIN || member.role === MemberRole.MODERATOR)) {
             return res.status(403).json({
                 status: "failed",
                 statusCode: 403,
-                errMsgs: { otherErr: { isErr: true, msg: "You do not have permission to delete columns." } },
+                errMsgs: {
+                    otherErr: {
+                        isErr: true,
+                        msg: "You do not have permission to delete columns.",
+                    },
+                },
             });
         }
         await db.column.delete({
@@ -47,10 +65,16 @@ const deleteColumnController = asyncHandler(async (req, res) => {
     }
     catch (error) {
         console.error("Error deleting column:", error);
+        let message = "Unknown error";
+        if (error instanceof Error) {
+            message = error.message;
+        }
         res.status(500).json({
             status: "failed",
             statusCode: 500,
-            errMsgs: { otherErr: { isErr: true, msg: `Server Error: ${error.message}` } },
+            errMsgs: {
+                otherErr: { isErr: true, msg: `Server Error: ${message}` },
+            },
         });
     }
 });

@@ -5,35 +5,43 @@ export const verifyJWTForProfile = asyncHandler(async (req, res, next) => {
     try {
         // Get the token from cookies or Authorization header
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
-        console.log("Request at VerifyJWTForPRofile :: ", req.body);
         if (!token) {
             return res.status(401).json({ error: "Token not found" });
         }
-        // Verify the token
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        console.log("Decoded Token :: ", decodedToken);
+        // Verify the token (cast env var to string to avoid undefined error)
+        const secret = process.env.ACCESS_TOKEN_SECRET;
+        if (!secret) {
+            throw new Error("ACCESS_TOKEN_SECRET is not defined");
+        }
+        const decodedToken = jwt.verify(token, secret);
+        if (!decodedToken.id) {
+            return res.status(401).json({ error: "Invalid token payload" });
+        }
         // Fetch the user from the database using db
         const user = await db.user.findUnique({
-            where: {
-                id: decodedToken.id, // Use the id field from the decoded token
-            },
+            where: { id: decodedToken.id },
             select: {
                 id: true,
                 username: true,
                 email: true,
                 name: true,
                 createdAt: true,
-                // Exclude password and refreshToken fields
             },
         });
         if (!user) {
             return res.status(401).json({ error: "Invalid token" });
         }
-        req.user = user;
+        // Fix email nullability issue by normalizing email to undefined if null
+        req.user = {
+            ...user,
+            email: user.email ?? undefined,
+        };
         next();
     }
     catch (error) {
-        return res.status(500).json({ error: "Error occurred in authorizing the user", message: error.message });
+        // Safe error message extraction
+        const message = error instanceof Error ? error.message : "Error occurred in authorizing the user";
+        return res.status(500).json({ error: message });
     }
 });
 //# sourceMappingURL=verifyJWTForProfile.js.map

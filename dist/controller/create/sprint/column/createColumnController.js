@@ -38,15 +38,15 @@ const createColumnController = asyncHandler(async (req, res) => {
         });
         const newSprint = await db.sprint.findUnique({
             where: {
-                id: sprintId
+                id: sprintId,
             },
             include: {
                 columns: {
                     include: {
-                        tasks: true
-                    }
-                }
-            }
+                        tasks: true,
+                    },
+                },
+            },
         });
         res.status(201).json({
             status: "success",
@@ -58,10 +58,11 @@ const createColumnController = asyncHandler(async (req, res) => {
     }
     catch (error) {
         console.error("Error creating column:", error);
+        const message = error instanceof Error ? error.message : "Unknown server error";
         res.status(500).json({
             status: "failed",
             statusCode: 500,
-            errMsgs: { otherErr: { isErr: true, msg: `Server Error: ${error.message}` } },
+            errMsgs: { otherErr: { isErr: true, msg: `Server Error: ${message}` } },
         });
     }
 });

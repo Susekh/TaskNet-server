@@ -54,14 +54,18 @@ const createSprintController = asyncHandler(async (req, res) => {
             sprint: sprint,
         });
 
-    } catch (error) {
-        console.error("Error creating sprint:", error);
-        res.status(500).json({
-            status: "failed",
-            statusCode: 500,
-            errMsgs: { otherErr: { isErr: true, msg: `Server Error: ${error.message}` } }
-        });
-    }
+    } catch (error: unknown) {
+    console.error("Error creating sprint:", error);
+
+    const message = error instanceof Error ? error.message : "Unknown server error";
+
+    res.status(500).json({
+        status: "failed",
+        statusCode: 500,
+        errMsgs: { otherErr: { isErr: true, msg: `Server Error: ${message}` } }
+    });
+}
+
 });
 
 export default createSprintController;

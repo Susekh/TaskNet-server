@@ -19,7 +19,6 @@ const githubLogin = asyncHandler(async (req, res) => {
         });
         const tokenData = tokenResponse.data;
         const accessToken = tokenData.access_token;
-        console.log("Github Access Token ::", accessToken);
         if (!accessToken) {
             return res
                 .status(400)
@@ -33,7 +32,7 @@ const githubLogin = asyncHandler(async (req, res) => {
         const userData = userResponse.data;
         const user = await db.user.findFirst({
             where: {
-                email: userData.email,
+                email: userData.email ?? undefined,
             },
             select: {
                 id: true,
@@ -63,36 +62,37 @@ const githubLogin = asyncHandler(async (req, res) => {
                 },
                 dob: true,
                 gender: true,
+                password: true,
             },
         });
         let responsePayload;
         if (!user) {
-            console.log("User data ::", userData);
-            const name = userData.name;
-            const email = userData.email;
-            // check the img url path is correct
-            const imgUrl = userData.avatar_url;
-            // check username is unique or not if not then provide an unique one
-            let username = userData.login;
+            const name = userData.name ?? "";
+            const email = userData.email ?? "";
+            const imgUrl = userData.avatar_url ?? "";
+            let username = userData.login ?? "github-user";
             let usernameExists = await db.user.findUnique({ where: { username } });
             while (usernameExists) {
-                username = `${userData.username}-${uuidv4().split("-")[0]}`;
+                username = `${userData.login}-${uuidv4().split("-")[0]}`;
                 usernameExists = await db.user.findUnique({ where: { username } });
             }
-            // generate a random strong password
             const password = generatePasswords();
             const hashedPassword = await bcrypt.hash(password, 10);
             const newUser = await db.user.create({
                 data: {
                     id: userData.id,
-                    username: username,
-                    email: email,
-                    name: name,
+                    username,
+                    email,
+                    name,
                     password: hashedPassword,
-                    imgUrl: imgUrl,
+                    imgUrl,
                 },
             });
-            const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(res, user);
+            const tokens = await generateAccessAndRefereshTokens(res, newUser);
+            if (!tokens) {
+                return res.status(500).json({ error: "Failed to generate tokens" });
+            }
+            const { accessToken, refreshToken } = tokens;
             responsePayload = {
                 data: {
                     status: "success",
@@ -109,21 +109,31 @@ const githubLogin = asyncHandler(async (req, res) => {
                     },
                     successMsg: "Logged in successfully.",
                 },
-                accessToken: accessToken,
-                refreshToken: refreshToken,
+                accessToken,
+                refreshToken,
             };
         }
         else {
-            const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(res, user);
+            const safeUser = {
+                ...user,
+                email: user.email ?? "",
+                imgUrl: user.imgUrl ?? "",
+                password: user.password ?? undefined,
+            };
+            const tokens = await generateAccessAndRefereshTokens(res, user);
+            if (!tokens) {
+                return res.status(500).json({ error: "Failed to generate tokens" });
+            }
+            const { accessToken, refreshToken } = tokens;
             responsePayload = {
                 data: {
                     status: "success",
                     statusCode: 201,
-                    user: user,
+                    user: safeUser,
                     successMsg: "Logged in successfully.",
                 },
-                accessToken: accessToken,
-                refreshToken: refreshToken,
+                accessToken,
+                refreshToken,
             };
         }
         const options = {
@@ -131,14 +141,14 @@ const githubLogin = asyncHandler(async (req, res) => {
             secure: true,
             sameSite: "none",
         };
-        res
+        return res
             .status(201)
             .cookie("accessToken", responsePayload.accessToken, options)
             .cookie("refreshToken", responsePayload.refreshToken, options)
             .json(responsePayload.data);
     }
     catch (error) {
-        res.status(500).json({ error: "Internal Server Error" });
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 });
 export default githubLogin;

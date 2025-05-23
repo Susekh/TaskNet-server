@@ -4,61 +4,64 @@ import bcrypt from "bcryptjs";
 import { CookieOptions, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
-export const generateAccessToken = function (id: number, username: string) {
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
+const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || "15m";
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || "7d";
+
+if (!ACCESS_TOKEN_SECRET || !REFRESH_TOKEN_SECRET) {
+  throw new Error("JWT secret keys are not defined in environment variables");
+}
+
+interface User {
+  id: string;
+  username: string;
+  email: string | null;
+  createdAt: Date;
+  name: string;
+  password?: string;
+  dob?: Date | null;
+  imgUrl?: string | null;
+}
+
+export const generateAccessToken = function (id: string, username: string) {
   return jwt.sign(
-    {
-      id: id,
-      username: username,
-    },
-    process.env.ACCESS_TOKEN_SECRET,
-    {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-    }
-  );
-};
-export const generateRefreshToken = function (id: number) {
-  return jwt.sign(
-    {
-      id: id,
-    },
-    process.env.REFRESH_TOKEN_SECRET,
-    {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-    }
+    { id, username },
+    ACCESS_TOKEN_SECRET,
+    { expiresIn: ACCESS_TOKEN_EXPIRY }
   );
 };
 
-export const generateAccessAndRefereshTokens = async (res: Response, user) => {
+export const generateRefreshToken = function (id: string) {
+  return jwt.sign(
+    { id },
+    REFRESH_TOKEN_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRY }
+  );
+};
+
+export const generateAccessAndRefereshTokens = async (
+  res: Response,
+  user: User
+): Promise<{ accessToken: string; refreshToken: string }> => {
   try {
-    console.log("user at generate :: ", user);
-
     const accessToken = generateAccessToken(user.id, user.username);
     const refreshToken = generateRefreshToken(user.id);
 
     await db.user.update({
       where: { id: user.id },
-      data: { refreshToken: refreshToken },
+      data: { refreshToken },
     });
-
-    console.log(`access :: ${accessToken} refresh :: ${refreshToken}`);
 
     return { accessToken, refreshToken };
   } catch (error) {
-    res.status(500).json({
-      status: "failed",
-      statusCode: 500,
-      errMsgs: {
-        otherErr: {
-          isErr: true,
-          msg: "can't login user :: caught at generateAccessAndRefereshTokens",
-        },
-      },
-    });
+    console.error("Error generating tokens:", error);
+    throw new Error("Failed to generate access and refresh tokens");
   }
 };
 
 const singInController = asyncHandler(async (req: Request, res: Response) => {
-  let formErr = [
+  const formErr = [
     { field: "username", isErr: false, msg: "" },
     { field: "name", isErr: false, msg: "" },
     { field: "email", isErr: false, msg: "" },
@@ -68,11 +71,22 @@ const singInController = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { username, password, email } = req.body;
 
-    console.log("at controller :: ", req.body);
+    if (typeof password !== "string") {
+      return res.status(400).json({
+        status: "failed",
+        statusCode: 400,
+        errMsgs: {
+          formErr: [
+            ...formErr,
+            { field: "password", isErr: true, msg: "Password is required." },
+          ],
+        },
+      });
+    }
 
-    const user = await db.user.findFirst({
+    const user = (await db.user.findFirst({
       where: {
-        OR: [{ username: username }, { email: email }],
+        OR: [{ username }, { email }],
       },
       select: {
         id: true,
@@ -83,37 +97,17 @@ const singInController = asyncHandler(async (req: Request, res: Response) => {
         password: true,
         dob: true,
         imgUrl: true,
-        projects: {
-          include: {
-            sprints: true,
-            members: true,
-          },
-        },
-        members: {
-          include: {
-            tasks: true,
-            project: {
-              select: {
-                imageUrl: true,
-                name: true,
-                sprints: true,
-              },
-            },
-            assingedIssues: true,
-          },
-        },
-        gender: true,
       },
-    });
+    })) as User | null;
 
-    if (!user) {
-      return res.json({
+    if (!user || !user.password) {
+      return res.status(400).json({
         status: "failed",
         statusCode: 400,
         errMsgs: {
           formErr: [
             ...formErr,
-            { field: "username", isErr: true, msg: "User doesn't exists." },
+            { field: "username", isErr: true, msg: "User doesn't exist." },
           ],
         },
       });
@@ -122,7 +116,7 @@ const singInController = asyncHandler(async (req: Request, res: Response) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.json({
+      return res.status(400).json({
         status: "failed",
         statusCode: 400,
         errMsgs: {
@@ -139,9 +133,7 @@ const singInController = asyncHandler(async (req: Request, res: Response) => {
       user
     );
 
-    delete user.password;
-
-    console.log("User after db update :: ", user);
+    const { password: _, ...userWithoutPassword } = user;
 
     const options: CookieOptions = {
       httpOnly: true,
@@ -156,17 +148,20 @@ const singInController = asyncHandler(async (req: Request, res: Response) => {
       .json({
         status: "success",
         statusCode: 201,
-        user: user,
-        successMsg: "Logged in succesfully.",
+        user: userWithoutPassword,
+        successMsg: "Logged in successfully.",
       });
-  } catch (error) {
+  } catch (error: unknown) {
+    let message = "Server error";
+    if (error instanceof Error) message = error.message;
+
     res.status(500).json({
       status: "failed",
       statusCode: 500,
       errMsgs: {
         otherErr: {
           isErr: true,
-          msg: `Server Error :: code :: ${500} :: ${error}`,
+          msg: `Server Error :: code :: 500 :: ${message}`,
         },
       },
     });

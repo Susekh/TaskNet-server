@@ -34,13 +34,10 @@ const initializeSocket = (server) => {
                         OR: [
                             { id: roomName },
                             {
-                                AND: [
-                                    { memberOneId },
-                                    { memberTwoId }
-                                ]
-                            }
-                        ]
-                    }
+                                AND: [{ memberOneId }, { memberTwoId }],
+                            },
+                        ],
+                    },
                 });
                 // If conversation doesn't exist, verify members and create it
                 if (!existingConversation) {
@@ -55,7 +52,7 @@ const initializeSocket = (server) => {
                                 id: roomName,
                                 memberOneId,
                                 memberTwoId,
-                            }
+                            },
                         });
                     }
                     else {
@@ -64,12 +61,13 @@ const initializeSocket = (server) => {
                 }
                 socket.to(roomName).emit("userJoined", {
                     socketId: socket.id,
-                    memberId: senderId
+                    memberId: senderId,
                 });
             }
             catch (err) {
+                const message = err instanceof Error ? err.message : "Unknown error";
                 console.error("❌ Error joining chat:", err);
-                socket.emit("error", { message: `Failed to join chat: ${err.message}` });
+                socket.emit("error", { message: `Failed to join chat: ${message}` });
             }
         });
         socket.on("sendChatMessage", async ({ conversationId, memberId, fileUrl, receiverId, name, message }) => {
@@ -85,7 +83,7 @@ const initializeSocket = (server) => {
                 const roomName = conversationId || [memberId, receiverId].sort().join("");
                 // Find existing or create conversation
                 let conversation = await db.conversation.findUnique({
-                    where: { id: roomName }
+                    where: { id: roomName },
                 });
                 if (!conversation) {
                     // Try to find by member IDs
@@ -93,8 +91,8 @@ const initializeSocket = (server) => {
                     conversation = await db.conversation.findFirst({
                         where: {
                             memberOneId,
-                            memberTwoId
-                        }
+                            memberTwoId,
+                        },
                     });
                     // If still not found, verify members and create new conversation
                     if (!conversation) {
@@ -107,8 +105,8 @@ const initializeSocket = (server) => {
                             data: {
                                 id: roomName,
                                 memberOneId,
-                                memberTwoId
-                            }
+                                memberTwoId,
+                            },
                         });
                         console.log(`Created conversation: ${conversation.id}`);
                     }
@@ -119,7 +117,7 @@ const initializeSocket = (server) => {
                         content: message || "",
                         fileUrl: fileUrl || null,
                         memberId,
-                        conversationId: conversation.id
+                        conversationId: conversation.id,
                     },
                     include: {
                         member: {
@@ -127,12 +125,12 @@ const initializeSocket = (server) => {
                                 user: {
                                     select: {
                                         name: true,
-                                        imgUrl: true
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        imgUrl: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
                 });
                 // Make sure we're in the room before emitting
                 socket.join(conversation.id);
@@ -141,8 +139,9 @@ const initializeSocket = (server) => {
                 console.log(`📨 Message sent to room ${conversation.id}`);
             }
             catch (err) {
+                const message = err instanceof Error ? err.message : "Unknown error";
                 console.error("❌ Error sending direct message:", err);
-                socket.emit("error", { message: `Failed to send message: ${err.message}` });
+                socket.emit("error", { message: `Failed to send message: ${message}` });
             }
         });
         socket.on("joinGroupChat", (groupId) => {
@@ -161,7 +160,7 @@ const initializeSocket = (server) => {
             console.log(`👥 Socket ${socket.id} joined group chat ${roomName}`);
             socket.to(roomName).emit("userJoined", {
                 socketId: socket.id,
-                groupId
+                groupId,
             });
         });
         socket.on("sendGroupMessage", async ({ groupId, senderId, name, message }) => {
@@ -172,14 +171,14 @@ const initializeSocket = (server) => {
                 }
                 // Verify member exists
                 const member = await db.member.findUnique({
-                    where: { id: senderId }
+                    where: { id: senderId },
                 });
                 if (!member) {
                     throw new Error("Member doesn't exist");
                 }
                 // Verify task/group exists
                 const task = await db.task.findUnique({
-                    where: { id: groupId }
+                    where: { id: groupId },
                 });
                 if (!task) {
                     throw new Error("Task/Group doesn't exist");
@@ -189,37 +188,38 @@ const initializeSocket = (server) => {
                         content: message,
                         memberId: senderId,
                         taskId: groupId,
-                        name: name
+                        name: name,
                     },
                     include: {
                         member: {
                             include: {
-                                user: true
-                            }
-                        }
-                    }
+                                user: true,
+                            },
+                        },
+                    },
                 });
                 console.log(`Group message created for ${groupId}`);
                 // Broadcast to room
                 io.to(roomName).emit("receiveGroupMessage", {
                     message: msg,
-                    sender: socket.id
+                    sender: socket.id,
                 });
                 console.log(`📨 Group message sent to ${roomName}`);
             }
             catch (err) {
+                const message = err instanceof Error ? err.message : "Unknown error";
                 console.error("❌ Error saving group message:", err);
-                socket.emit("error", { message: `Failed to send group message: ${err.message}` });
+                socket.emit("error", { message: `Failed to send group message: ${message}` });
             }
         });
         socket.on("disconnect", () => {
             const connectionInfo = activeConnections.get(socket.id);
             if (connectionInfo) {
                 // Notify rooms of departure
-                connectionInfo.rooms.forEach(room => {
+                connectionInfo.rooms.forEach((room) => {
                     socket.to(room).emit("userLeft", {
                         socketId: socket.id,
-                        memberId: connectionInfo.senderId
+                        memberId: connectionInfo.senderId,
                     });
                 });
                 activeConnections.delete(socket.id);

@@ -1,15 +1,23 @@
+import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../../utils/apiError.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
 import asyncHandler from "../../utils/asyncHanlder.js";
 
-// Single file upload controller
-const uploadSingleFile = asyncHandler(async (req, res, next) => {
+// Extend Express.Multer.File to include S3 fields you use
+interface MulterS3File extends Express.Multer.File {
+  location: string;
+  key: string;
+}
+
+const uploadSingleFile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.file) {
+    const file = req.file as MulterS3File | undefined;
+
+    if (!file) {
       throw new ApiError(400, "No file uploaded", [], true);
     }
 
-    const { location, key, mimetype, originalname } = req.file;
+    const { location, key, mimetype, originalname } = file;
 
     return res.status(200).json(
       new ApiResponse(
@@ -23,14 +31,15 @@ const uploadSingleFile = asyncHandler(async (req, res, next) => {
         "File uploaded successfully"
       )
     );
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof ApiError) {
       return next(error);
     }
+    const message = error instanceof Error ? error.message : "Something went wrong during upload";
     return next(
       new ApiError(
         500,
-        error.message || "Something went wrong during upload",
+        message,
         [],
         true
       )
@@ -38,14 +47,15 @@ const uploadSingleFile = asyncHandler(async (req, res, next) => {
   }
 });
 
-// Multiple file upload controller
-const uploadMultipleFiles = asyncHandler(async (req, res, next) => {
+const uploadMultipleFiles = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.files || req.files.length === 0) {
+    const files = req.files as MulterS3File[] | undefined;
+
+    if (!files || files.length === 0) {
       throw new ApiError(400, "No files uploaded", [], true);
     }
 
-    const uploadedFiles = req.files.map((file) => ({
+    const uploadedFiles = files.map((file) => ({
       fileUrl: file.location,
       key: file.key,
       originalName: file.originalname,
@@ -59,14 +69,15 @@ const uploadMultipleFiles = asyncHandler(async (req, res, next) => {
         "All files uploaded successfully"
       )
     );
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof ApiError) {
       return next(error);
     }
+    const message = error instanceof Error ? error.message : "Something went wrong during upload";
     return next(
       new ApiError(
         500,
-        error.message || "Something went wrong during upload",
+        message,
         [],
         true
       )
@@ -74,11 +85,10 @@ const uploadMultipleFiles = asyncHandler(async (req, res, next) => {
   }
 });
 
-// Optional: Delete file from S3
 import s3 from "../../utils/s3.js"; // AWS S3 client
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
-const deleteFile = asyncHandler(async (req, res, next) => {
+const deleteFile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { key } = req.params;
 
@@ -87,7 +97,7 @@ const deleteFile = asyncHandler(async (req, res, next) => {
     }
 
     const deleteParams = {
-      Bucket: process.env.AWS_S3_BUCKET,
+      Bucket: process.env.AWS_S3_BUCKET!,
       Key: key,
     };
 
@@ -96,14 +106,15 @@ const deleteFile = asyncHandler(async (req, res, next) => {
     return res.status(200).json(
       new ApiResponse(200, { key }, "File deleted successfully")
     );
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof ApiError) {
       return next(error);
     }
+    const message = error instanceof Error ? error.message : "Something went wrong during deletion";
     return next(
       new ApiError(
         500,
-        error.message || "Something went wrong during deletion",
+        message,
         [],
         true
       )

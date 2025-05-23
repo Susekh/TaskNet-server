@@ -7,7 +7,8 @@ const updateProfilePicture = asyncHandler(async (req, res, next) => {
         console.log("req from file", req.file);
         throw new ApiError(400, "No file or user not authenticated");
     }
-    const { location } = req.file;
+    const file = req.file;
+    const location = file.location;
     const updatedUser = await db.user.update({
         where: { id: req.user.id },
         data: { imgUrl: location },

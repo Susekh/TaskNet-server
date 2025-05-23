@@ -13,6 +13,6 @@
     "typeRoots": ["./types", "./node_modules/@types"], // include your custom types
     "types": ["node"]                         // base node types
   },
-  "include": ["src/**/*", "types/**/*"],      // include app source and custom types
+  "include": ["src/**/*", "types/**/*", "types"],      // include app source and custom types
   "exclude": ["node_modules", "dist"]
 }

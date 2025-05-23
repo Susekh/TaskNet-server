@@ -37,7 +37,9 @@ const updateProjectImage = asyncHandler(async (req, res) => {
         where: { id: projectId },
         data: { imageUrl: location },
     });
-    return res.status(200).json(new ApiResponse(200, updatedProject, "Project image updated successfully"));
+    return res
+        .status(200)
+        .json(new ApiResponse(200, updatedProject, "Project image updated successfully"));
 });
 export default updateProjectImage;
 //# sourceMappingURL=updateProjectImage.controller.js.map

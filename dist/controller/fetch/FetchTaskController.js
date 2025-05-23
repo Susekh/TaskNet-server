@@ -23,12 +23,12 @@ const FetchTaskController = asyncHandler(async (req, res) => {
                             select: {
                                 name: true,
                                 imgUrl: true,
-                                username: true
-                            }
-                        }
-                    }
+                                username: true,
+                            },
+                        },
+                    },
                 },
-                column: true
+                column: true,
             },
         });
         if (!task) {
@@ -38,7 +38,6 @@ const FetchTaskController = asyncHandler(async (req, res) => {
                 message: "Task not found.",
             });
         }
-        ;
         res.status(200).json({
             status: "success",
             statusCode: 200,
@@ -48,11 +47,15 @@ const FetchTaskController = asyncHandler(async (req, res) => {
     }
     catch (error) {
         console.error("Error fetching Task :", error);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
         res.status(500).json({
             status: "failed",
             statusCode: 500,
             message: "Internal server error.",
-            error: error.message,
+            error: errorMessage,
         });
     }
 });

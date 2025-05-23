@@ -10,12 +10,13 @@ import generatePasswords from "../../../utils/generatePasswords.js";
 interface User {
   id: string;
   username: string;
-  email: string;
+  email: string | null;
   createdAt: Date;
   name: string;
-  imgUrl: string;
+  imgUrl: string | null;
   projects?: any;
   members?: any;
+  password?: string;
 }
 
 interface ResponsePayload {
@@ -52,8 +53,6 @@ const githubLogin = asyncHandler(async (req: Request, res: Response) => {
     const tokenData = tokenResponse.data;
     const accessToken = tokenData.access_token;
 
-    console.log("Github Access Token ::", accessToken);
-
     if (!accessToken) {
       return res
         .status(400)
@@ -70,7 +69,7 @@ const githubLogin = asyncHandler(async (req: Request, res: Response) => {
 
     const user = await db.user.findFirst({
       where: {
-        email: userData.email,
+        email: userData.email ?? undefined,
       },
       select: {
         id: true,
@@ -90,8 +89,8 @@ const githubLogin = asyncHandler(async (req: Request, res: Response) => {
             tasks: true,
             project: {
               select: {
-                name : true,
-                imageUrl : true,
+                name: true,
+                imageUrl: true,
                 sprints: true,
               },
             },
@@ -100,45 +99,45 @@ const githubLogin = asyncHandler(async (req: Request, res: Response) => {
         },
         dob: true,
         gender: true,
+        password: true,
       },
     });
 
     let responsePayload: ResponsePayload;
 
     if (!user) {
-      console.log("User data ::", userData);
+      const name = userData.name ?? "";
+      const email = userData.email ?? "";
+      const imgUrl = userData.avatar_url ?? "";
 
-      const name = userData.name;
-      const email = userData.email;
-      // check the img url path is correct
-      const imgUrl = userData.avatar_url;
-      // check username is unique or not if not then provide an unique one
-      let username = userData.login;
+      let username = userData.login ?? "github-user";
 
       let usernameExists = await db.user.findUnique({ where: { username } });
 
       while (usernameExists) {
-        username = `${userData.username}-${uuidv4().split("-")[0]}`;
+        username = `${userData.login}-${uuidv4().split("-")[0]}`;
         usernameExists = await db.user.findUnique({ where: { username } });
       }
-      // generate a random strong password
-      const password = generatePasswords();
 
+      const password = generatePasswords();
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const newUser = await db.user.create({
         data: {
           id: userData.id,
-          username: username,
-          email: email,
-          name: name,
+          username,
+          email,
+          name,
           password: hashedPassword,
-          imgUrl: imgUrl,
+          imgUrl,
         },
       });
 
-      const { accessToken, refreshToken } =
-        await generateAccessAndRefereshTokens(res, user);
+      const tokens = await generateAccessAndRefereshTokens(res, newUser);
+      if (!tokens) {
+        return res.status(500).json({ error: "Failed to generate tokens" });
+      }
+      const { accessToken, refreshToken } = tokens;
 
       responsePayload = {
         data: {
@@ -156,22 +155,32 @@ const githubLogin = asyncHandler(async (req: Request, res: Response) => {
           },
           successMsg: "Logged in successfully.",
         },
-        accessToken: accessToken,
-        refreshToken: refreshToken,
+        accessToken,
+        refreshToken,
       };
     } else {
-      const { accessToken, refreshToken } =
-        await generateAccessAndRefereshTokens(res, user);
+      const safeUser: User = {
+        ...user,
+        email: user.email ?? "",
+        imgUrl: user.imgUrl ?? "",
+        password: user.password ?? undefined,
+      };
+
+      const tokens = await generateAccessAndRefereshTokens(res, user);
+      if (!tokens) {
+        return res.status(500).json({ error: "Failed to generate tokens" });
+      }
+      const { accessToken, refreshToken } = tokens;
 
       responsePayload = {
         data: {
           status: "success",
           statusCode: 201,
-          user: user,
+          user: safeUser,
           successMsg: "Logged in successfully.",
         },
-        accessToken: accessToken,
-        refreshToken: refreshToken,
+        accessToken,
+        refreshToken,
       };
     }
 
@@ -181,13 +190,13 @@ const githubLogin = asyncHandler(async (req: Request, res: Response) => {
       sameSite: "none",
     };
 
-    res
+    return res
       .status(201)
       .cookie("accessToken", responsePayload.accessToken, options)
       .cookie("refreshToken", responsePayload.refreshToken, options)
       .json(responsePayload.data);
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+  } catch (error: any) {
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

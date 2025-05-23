@@ -11,13 +11,13 @@ const FetchMessagesController = asyncHandler(async (req, res) => {
             include: {
                 member: {
                     include: {
-                        user: true
-                    }
-                }
+                        user: true,
+                    },
+                },
             },
             orderBy: {
-                createdAt: 'desc'
-            }
+                createdAt: "desc",
+            },
         });
         if (!messages) {
             res.status(200).json({
@@ -31,16 +31,20 @@ const FetchMessagesController = asyncHandler(async (req, res) => {
             status: "success",
             statusCode: 200,
             message: "message fetched",
-            chatMessages: messages
+            chatMessages: messages,
         });
     }
     catch (error) {
         console.log("Error in Fetching messages ::", error);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
         res.status(500).json({
             status: "failed",
             statusCode: 500,
             message: "Internal server error in fetching messages.",
-            error: error.message,
+            error: errorMessage,
         });
     }
 });

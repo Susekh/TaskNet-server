@@ -13,13 +13,13 @@ const googleLogin = asyncHandler(async (req, res) => {
         console.log({ id_token, access_token });
         const googleUser = jwt.decode(id_token);
         console.log("Google user ::", googleUser);
-        const email = googleUser.email;
-        const name = googleUser.name;
-        const imgUrl = googleUser.picture;
-        const user = await db.user.findFirst({
-            where: {
-                email: email,
-            },
+        // Use nullish coalescing to avoid null assignment errors
+        const email = googleUser.email ?? "";
+        const name = googleUser.name ?? "";
+        const imgUrl = googleUser.picture ?? "";
+        // Find existing user by email
+        const userFromDb = await db.user.findFirst({
+            where: { email },
             select: {
                 id: true,
                 username: true,
@@ -51,28 +51,33 @@ const googleLogin = asyncHandler(async (req, res) => {
             },
         });
         let responsePayload;
-        if (!user) {
-            // check username is unique or not if not then provide an unique one
-            let username = googleUser.given_name;
+        if (!userFromDb) {
+            // Make sure username is unique
+            let username = googleUser.given_name ?? "user";
             let usernameExists = await db.user.findUnique({ where: { username } });
             while (usernameExists) {
                 username = `${name}-${uuidv4().split("-")[0]}`;
                 usernameExists = await db.user.findUnique({ where: { username } });
             }
-            // generate a random strong password
+            // Generate strong password and hash
             const password = generatePasswords();
             const hashedPassword = await bcrypt.hash(password, 10);
+            // Create new user
             const newUser = await db.user.create({
                 data: {
-                    username: username,
-                    email: email,
-                    name: name,
+                    username,
+                    email,
+                    name,
                     password: hashedPassword,
-                    imgUrl: imgUrl,
+                    imgUrl,
                 },
             });
             console.log("New User ::", newUser);
-            const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(res, newUser);
+            const tokens = await generateAccessAndRefereshTokens(res, newUser);
+            if (!tokens) {
+                return res.status(500).json({ error: "Failed to generate tokens" });
+            }
+            const { accessToken, refreshToken } = tokens;
             responsePayload = {
                 data: {
                     status: "success",
@@ -80,30 +85,40 @@ const googleLogin = asyncHandler(async (req, res) => {
                     user: {
                         id: newUser.id,
                         username: newUser.username,
-                        email: newUser.email,
+                        email: newUser.email ?? "",
                         name: newUser.name,
                         createdAt: newUser.createdAt,
-                        imgUrl: newUser.imgUrl,
+                        imgUrl: newUser.imgUrl ?? "",
                         projects: [],
                         members: [],
                     },
                     successMsg: "Logged in successfully.",
                 },
-                accessToken: accessToken,
-                refreshToken: refreshToken,
+                accessToken,
+                refreshToken,
             };
         }
         else {
-            const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(res, user);
+            // Existing user: fix nullable fields before assigning to User type
+            const safeUser = {
+                ...userFromDb,
+                email: userFromDb.email ?? "",
+                imgUrl: userFromDb.imgUrl ?? "",
+            };
+            const tokens = await generateAccessAndRefereshTokens(res, userFromDb);
+            if (!tokens) {
+                return res.status(500).json({ error: "Failed to generate tokens" });
+            }
+            const { accessToken, refreshToken } = tokens;
             responsePayload = {
                 data: {
                     status: "success",
                     statusCode: 201,
-                    user: user,
+                    user: safeUser,
                     successMsg: "Logged in successfully.",
                 },
-                accessToken: accessToken,
-                refreshToken: refreshToken,
+                accessToken,
+                refreshToken,
             };
         }
         const options = {
@@ -111,7 +126,7 @@ const googleLogin = asyncHandler(async (req, res) => {
             secure: true,
             sameSite: "none",
         };
-        res
+        return res
             .status(201)
             .cookie("accessToken", responsePayload.accessToken, options)
             .cookie("refreshToken", responsePayload.refreshToken, options)
@@ -119,7 +134,7 @@ const googleLogin = asyncHandler(async (req, res) => {
     }
     catch (error) {
         console.log("Err at google login :: ", error);
-        res.status(500).json({ error: "Internal Server Error" });
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 });
 export default googleLogin;

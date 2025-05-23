@@ -41,7 +41,10 @@ const removeTaskMemberController = asyncHandler(async (req: Request, res: Respon
       },
     });
 
-    if (!member || ![MemberRole.ADMIN, MemberRole.MODERATOR].includes(member.role)) {
+    // Use a Set for allowed roles to fix TS error
+    const allowedRoles = new Set<MemberRole>([MemberRole.ADMIN, MemberRole.MODERATOR]);
+
+    if (!member || !allowedRoles.has(member.role)) {
       return res.status(403).json({
         status: "failed",
         statusCode: 403,
@@ -68,15 +71,21 @@ const removeTaskMemberController = asyncHandler(async (req: Request, res: Respon
       statusCode: 200,
       message: "Member removed from task successfully.",
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error removing member from task:", error);
+
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     res.status(500).json({
       status: "failed",
       statusCode: 500,
       errMsgs: {
         otherErr: {
           isErr: true,
-          msg: `Server Error: ${error.message}`,
+          msg: `Server Error: ${errorMessage}`,
         },
       },
     });

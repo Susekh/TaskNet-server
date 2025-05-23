@@ -2,20 +2,9 @@ import asyncHandler from "../../../../../utils/asyncHanlder.js";
 import db from "../../../../../utils/db/db.js";
 
 const moveTaskInColumnController = asyncHandler(async (req, res) => {
-  const {
-    previousColumnId,
-    targetColumnId,
-    taskId,
-    order,
-  } = req.body;
+  const { previousColumnId, targetColumnId, taskId, order } = req.body;
 
-  // Validate input
-  if (
-    !previousColumnId ||
-    !targetColumnId ||
-    !taskId ||
-    order === undefined
-  ) {
+  if (!previousColumnId || !targetColumnId || !taskId || order === undefined) {
     return res.status(400).json({
       status: "failed",
       statusCode: 400,
@@ -40,7 +29,6 @@ const moveTaskInColumnController = asyncHandler(async (req, res) => {
 
   try {
     await db.$transaction(async (tx) => {
-      // Adjust order in source column if moving to another column
       if (!isSameColumn) {
         await tx.task.updateMany({
           where: {
@@ -56,7 +44,6 @@ const moveTaskInColumnController = asyncHandler(async (req, res) => {
           },
         });
       } else {
-        // If same column: reordering logic
         const direction = order > task.order ? -1 : 1;
         await tx.task.updateMany({
           where: {
@@ -75,7 +62,6 @@ const moveTaskInColumnController = asyncHandler(async (req, res) => {
         });
       }
 
-      // Shift other tasks in target column if different column
       if (!isSameColumn) {
         await tx.task.updateMany({
           where: {
@@ -92,7 +78,6 @@ const moveTaskInColumnController = asyncHandler(async (req, res) => {
         });
       }
 
-      // Update task's column and order
       await tx.task.update({
         where: { id: taskId },
         data: {
@@ -107,6 +92,14 @@ const moveTaskInColumnController = asyncHandler(async (req, res) => {
       where: { id: targetColumnId },
       include: { tasks: true },
     });
+
+    if (!column) {
+      return res.status(404).json({
+        status: "failed",
+        statusCode: 404,
+        errMsgs: { otherErr: { isErr: true, msg: "Column not found after update." } },
+      });
+    }
 
     const sprint = await db.sprint.findUnique({
       where: { id: column.sprintId },
@@ -126,13 +119,16 @@ const moveTaskInColumnController = asyncHandler(async (req, res) => {
       column,
       sprint,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error moving task:", error);
+
+    const message = error instanceof Error ? error.message : "Unknown server error";
+
     res.status(500).json({
       status: "failed",
       statusCode: 500,
       errMsgs: {
-        otherErr: { isErr: true, msg: `Server error: ${error.message}` },
+        otherErr: { isErr: true, msg: `Server error: ${message}` },
       },
     });
   }

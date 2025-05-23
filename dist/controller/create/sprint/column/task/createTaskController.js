@@ -51,24 +51,16 @@ const createTaskController = asyncHandler(async (req, res) => {
             },
         });
         const newColumn = await db.column.findUnique({
-            where: {
-                id: task.columnId
-            },
-            include: {
-                tasks: true
-            }
+            where: { id: task.columnId },
+            include: { tasks: true },
         });
         const sprint = await db.sprint.findUnique({
-            where: {
-                id: column.sprintId
-            },
+            where: { id: column.sprintId },
             include: {
                 columns: {
-                    include: {
-                        tasks: true
-                    }
-                }
-            }
+                    include: { tasks: true },
+                },
+            },
         });
         res.status(201).json({
             status: "success",
@@ -76,15 +68,16 @@ const createTaskController = asyncHandler(async (req, res) => {
             message: "Task created successfully.",
             task: task,
             sprint: sprint,
-            column: newColumn
+            column: newColumn,
         });
     }
     catch (error) {
         console.error("Error creating task:", error);
+        const message = error instanceof Error ? error.message : "Unknown server error";
         res.status(500).json({
             status: "failed",
             statusCode: 500,
-            errMsgs: { otherErr: { isErr: true, msg: `Server Error: ${error.message}` } },
+            errMsgs: { otherErr: { isErr: true, msg: `Server Error: ${message}` } },
         });
     }
 });

@@ -13,6 +13,13 @@ const FetchProjectController = asyncHandler(async (req, res) => {
         });
     }
 
+    if (!user) {
+        return res.status(401).json({
+            status: "failed",
+            statusCode: 401,
+            message: "User is not authenticated.",
+        });
+    }
 
     try {
         // Fetch project by ID
@@ -82,8 +89,7 @@ const FetchProjectController = asyncHandler(async (req, res) => {
               statusCode: 403,
               message: "User is not a member of this project.",
             });
-          }
-      
+        }
 
         // Sort the tasks array inside each column by the 'order' property
         if (project.sprints) {
@@ -105,13 +111,19 @@ const FetchProjectController = asyncHandler(async (req, res) => {
             project: project,
         });
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Error fetching project:", error);
+
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+
         res.status(500).json({
             status: "failed",
             statusCode: 500,
             message: "Internal server error.",
-            error: error.message,
+            error: errorMessage,
         });
     }
 });

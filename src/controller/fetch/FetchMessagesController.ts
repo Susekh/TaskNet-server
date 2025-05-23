@@ -5,34 +5,30 @@ const FetchMessagesController = asyncHandler(async (req, res) => {
   try {
     const { taskId } = req.body;
 
-
     console.log("Task Id in messages :: ", req.body);
-    
 
     const messages = await db.message.findMany({
       where: {
         taskId,
       },
-      include : {
-        member : {
-          include : {
-            user : true
-          }
-        }
+      include: {
+        member: {
+          include: {
+            user: true,
+          },
+        },
       },
-      orderBy : {
-        createdAt : 'desc'
-      }
+      orderBy: {
+        createdAt: "desc",
+      },
     });
-
-
 
     if (!messages) {
       res.status(200).json({
         status: "success",
         statusCode: 200,
         message: "No messages found",
-        chatMessages : [],
+        chatMessages: [],
       });
     }
 
@@ -40,19 +36,23 @@ const FetchMessagesController = asyncHandler(async (req, res) => {
       status: "success",
       statusCode: 200,
       message: "message fetched",
-      chatMessages : messages
+      chatMessages: messages,
     });
-
-  } catch (error) {
+  } catch (error: unknown) {
     console.log("Error in Fetching messages ::", error);
+
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     res.status(500).json({
       status: "failed",
       statusCode: 500,
       message: "Internal server error in fetching messages.",
-      error: error.message,
+      error: errorMessage,
     });
   }
 });
-
 
 export default FetchMessagesController;

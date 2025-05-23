@@ -13,6 +13,14 @@ const FetchSprintController = asyncHandler(async (req, res) => {
         });
     }
 
+    if (!user) {
+      return res.status(401).json({
+        status: "failed",
+        statusCode: 401,
+        message: "User is not authenticated.",
+      });
+    }
+
     try {
         // Fetch sprint with its project and project members
         const sprint = await db.sprint.findUnique({
@@ -73,13 +81,19 @@ const FetchSprintController = asyncHandler(async (req, res) => {
             sprint: sprint,
         });
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Error fetching sprint:", error);
+
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+
         res.status(500).json({
             status: "failed",
             statusCode: 500,
             message: "Internal server error.",
-            error: error.message,
+            error: errorMessage,
         });
     }
 });

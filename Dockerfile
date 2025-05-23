@@ -1,5 +1,8 @@
 # Use official Node.js image
-FROM node:slim
+FROM node:24-slim
+
+# Install OpenSSL (required for Prisma on Linux)
+RUN apt-get update && apt-get install -y openssl
 
 # Create app directory
 WORKDIR /app
@@ -11,6 +14,9 @@ RUN npm install
 
 # Copy source code
 COPY . .
+
+# 👇 Generate Prisma client (AFTER copying the code and installing dependencies)
+RUN npx prisma generate
 
 # Build TypeScript
 RUN npm run build

@@ -10,6 +10,13 @@ const FetchProjectController = asyncHandler(async (req, res) => {
             message: "Project ID is required.",
         });
     }
+    if (!user) {
+        return res.status(401).json({
+            status: "failed",
+            statusCode: 401,
+            message: "User is not authenticated.",
+        });
+    }
     try {
         // Fetch project by ID
         const project = await db.project.findUnique({
@@ -97,11 +104,15 @@ const FetchProjectController = asyncHandler(async (req, res) => {
     }
     catch (error) {
         console.error("Error fetching project:", error);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
         res.status(500).json({
             status: "failed",
             statusCode: 500,
             message: "Internal server error.",
-            error: error.message,
+            error: errorMessage,
         });
     }
 });
