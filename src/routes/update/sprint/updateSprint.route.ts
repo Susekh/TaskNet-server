@@ -1,9 +1,10 @@
 import { Router } from "express";
+import updateSprintStatus from "../../../controller/update/sprint/updateSprintStatus.controller.js";
 import { verifyJWTForProfile } from "../../../middleware/verifyJWTForProfile.js";
-import updateMemberRole from "../../../controller/update/project/updateRoles.controller.js";
 
 const router = Router();
 
-router.post("/update-role", verifyJWTForProfile, updateMemberRole);
+router.post("/status",verifyJWTForProfile, updateSprintStatus);
+
 
 export default router;

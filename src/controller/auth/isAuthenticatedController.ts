@@ -49,7 +49,6 @@ const isAuthenticatedController = asyncHandler(
             .json({ status : "success", user : user, successMsg : "User is Authenticated" });
 
     } catch (error) {
-        // Handle any errors
         return res.status(500).json({ status : "failed", errMsgs : { otherErr : "Error occured at checking Authentication."} });
     }
 });

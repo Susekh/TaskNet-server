@@ -50,6 +50,8 @@ model  Project{
 
   members Member[]
   sprints Sprint[]
+
+  isPro Boolean @default(false)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

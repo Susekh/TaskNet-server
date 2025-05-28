@@ -13,16 +13,24 @@ const createColumnController = asyncHandler(async (req, res) => {
       errMsgs: {
         formErr: [
           { field: "sprintId", isErr: true, msg: "Sprint ID is required." },
-          { field: "name", isErr: true, msg: "name is required." },
+          { field: "name", isErr: true, msg: "Name is required." },
         ],
       },
     });
   }
 
   try {
-    // Check if the sprint exists
+    // Fetch the sprint with project and columns
     const sprint = await db.sprint.findUnique({
       where: { id: sprintId },
+      include: {
+        columns: true,
+        project: {
+          select: {
+            isPro: true,
+          },
+        },
+      },
     });
 
     if (!sprint) {
@@ -30,6 +38,20 @@ const createColumnController = asyncHandler(async (req, res) => {
         status: "failed",
         statusCode: 404,
         errMsgs: { otherErr: { isErr: true, msg: "Sprint not found." } },
+      });
+    }
+
+    // Enforcing column limit for non-Pro projects
+    if (!sprint.project.isPro && sprint.columns.length >= 7) {
+      return res.status(403).json({
+        status: "failed",
+        statusCode: 403,
+        errMsgs: {
+          otherErr: {
+            isErr: true,
+            msg: "You have reached the maximum number of columns allowed for free projects. Please upgrade to Pro to add more.",
+          },
+        },
       });
     }
 
@@ -42,10 +64,9 @@ const createColumnController = asyncHandler(async (req, res) => {
       },
     });
 
+    // Return the updated sprint with its columns and tasks
     const newSprint = await db.sprint.findUnique({
-      where: {
-        id: sprintId,
-      },
+      where: { id: sprintId },
       include: {
         columns: {
           include: {

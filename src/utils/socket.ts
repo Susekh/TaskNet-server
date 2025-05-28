@@ -97,6 +97,9 @@ const initializeSocket = (server: HttpServer) => {
             throw new Error("Member ID is required");
           }
 
+          console.log("FIle url ::", fileUrl);
+          
+
           if (!message && !fileUrl) {
             throw new Error("Either message content or file must be provided");
           }
@@ -206,11 +209,11 @@ const initializeSocket = (server: HttpServer) => {
 
     socket.on(
       "sendGroupMessage",
-      async ({ groupId, senderId, name, message }: { groupId: string; senderId: string; name: string; message: string }) => {
+      async ({ groupId, senderId, name, message, fileUrl }: { groupId: string; senderId: string; name: string; message: string, fileUrl : string }) => {
         const roomName = `group-${groupId}`;
 
         try {
-          if (!groupId || !senderId || !message) {
+          if (!groupId && !senderId && (!message || !fileUrl)) {
             throw new Error("Missing required message data");
           }
 
@@ -235,6 +238,7 @@ const initializeSocket = (server: HttpServer) => {
           const msg = await db.message.create({
             data: {
               content: message,
+              fileUrl: fileUrl || null,
               memberId: senderId,
               taskId: groupId,
               name: name,
