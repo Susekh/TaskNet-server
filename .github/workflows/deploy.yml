@@ -20,14 +20,9 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Create .env file from secret
-      run: |
-        touch .env
-        echo "${{ secrets.ENV_FILE }}" > .env
-
-    - name: Load env variables
-      run: |
-        export $(cat .env | xargs)
+    - name: Create .env file from repository variable
+      run : |
+          echo "${{ vars.PROD_ENV }}" | tr ' ' '\n' > .env
 
     - name: Build
       run: |
