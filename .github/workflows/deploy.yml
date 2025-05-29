@@ -45,4 +45,4 @@ jobs:
         run: npm run build
       
       - name: restart pm2
-        run : pm2 restart
+        run : pm2 restart tasknet-server
