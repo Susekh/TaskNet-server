@@ -1,27 +1,45 @@
-name: NodeJS CI/CD
-
-on:
-  push:
-    branches: [ "main" ]
+name: Deploy
+on: [push]
 
 jobs:
-  build:
+  deploy:
     runs-on: self-hosted
-
-    strategy:
-      matrix:
-        node-version: [22.x]
-
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-
-    - name: Build
-      run: |
-        echo "${{ vars.PROD_ENV }}" | tr ' ' '\n' > .env
-        npm install
-        npm run build
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+      
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          PORT=${{ secrets.PORT }}
+          FRONTEND_URI=${{ secrets.FRONTEND_URI }}
+          ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
+          ACCESS_TOKEN_EXPIRY=${{ secrets.ACCESS_TOKEN_EXPIRY }}
+          REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }}
+          REFRESH_TOKEN_EXPIRY=${{ secrets.REFRESH_TOKEN_EXPIRY }}
+          CLIENT_ID_GITHUB=${{ secrets.CLIENT_ID_GITHUB }}
+          CLIENT_SECRET_GITHUB=${{ secrets.CLIENT_SECRET_GITHUB }}
+          CLIENT_ID_GOOGLE=${{ secrets.CLIENT_ID_GOOGLE }}
+          CLIENT_SECRET_GOOGLE=${{ secrets.CLIENT_SECRET_GOOGLE }}
+          CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          DIRECT_URL=${{ secrets.DIRECT_URL }}
+          AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          NODEMAILER_USER=${{ secrets.NODEMAILER_USER }}
+          NODEMAILER_PASS=${{ secrets.NODEMAILER_PASS }}
+          EOF
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Build
+        run: npm run build
