@@ -20,11 +20,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Create .env file from repository variable
-      run : |
-          echo "${{ vars.PROD_ENV }}" | tr ' ' '\n' > .env
-
     - name: Build
       run: |
+        echo "${{ vars.PROD_ENV }}" | tr ' ' '\n' > .env
         npm install
         npm run build
