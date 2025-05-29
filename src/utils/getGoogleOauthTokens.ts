@@ -8,7 +8,7 @@ export default async function getGoogleOauthTokens (code : string) {
         code,
         client_id : process.env.CLIENT_ID_GOOGLE,
         client_secret : process.env.CLIENT_SECRET_GOOGLE,
-        redirect_uri : 'http://localhost:5173/auth/oauth/google',
+        redirect_uri : `${process.env.FRONTEND_URI}/auth/oauth/google`,
         grant_type : 'authorization_code'
     };
 

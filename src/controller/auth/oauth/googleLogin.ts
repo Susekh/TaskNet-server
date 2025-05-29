@@ -57,7 +57,7 @@ const googleLogin = asyncHandler(async (req: Request, res: Response) => {
 
     console.log("Google user ::", googleUser);
 
-    // Use nullish coalescing to avoid null assignment errors
+   
     const email = googleUser.email ?? "";
     const name = googleUser.name ?? "";
     const imgUrl = googleUser.picture ?? "";
@@ -108,7 +108,7 @@ const googleLogin = asyncHandler(async (req: Request, res: Response) => {
         usernameExists = await db.user.findUnique({ where: { username } });
       }
 
-      // Generate strong password and hash
+
       const password = generatePasswords();
       const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -151,7 +151,6 @@ const googleLogin = asyncHandler(async (req: Request, res: Response) => {
         refreshToken,
       };
     } else {
-      // Existing user: fix nullable fields before assigning to User type
       const safeUser: User = {
         ...userFromDb,
         email: userFromDb.email ?? "",
