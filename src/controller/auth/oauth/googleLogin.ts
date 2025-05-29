@@ -51,13 +51,16 @@ const googleLogin = asyncHandler(async (req: Request, res: Response) => {
 
     const { id_token, access_token } = await getGoogleOauthTokens(code);
 
+    if (!id_token) {
+      return res.status(400).json({ error: "ID token is missing" });
+    }
+
     console.log({ id_token, access_token });
 
     const googleUser = jwt.decode(id_token) as GoogleUser;
 
     console.log("Google user ::", googleUser);
 
-   
     const email = googleUser.email ?? "";
     const name = googleUser.name ?? "";
     const imgUrl = googleUser.picture ?? "";
@@ -107,7 +110,6 @@ const googleLogin = asyncHandler(async (req: Request, res: Response) => {
         username = `${name}-${uuidv4().split("-")[0]}`;
         usernameExists = await db.user.findUnique({ where: { username } });
       }
-
 
       const password = generatePasswords();
       const hashedPassword = await bcrypt.hash(password, 10);
