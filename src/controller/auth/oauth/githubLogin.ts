@@ -67,10 +67,9 @@ const githubLogin = asyncHandler(async (req: Request, res: Response) => {
 
     const userData = userResponse.data;
 
-    const user = await db.user.findFirst({
-      where: {
-        email: userData.email ?? undefined,
-      },
+   const user = userData.email
+  ? await db.user.findUnique({
+      where: { email: userData.email },
       select: {
         id: true,
         username: true,
@@ -101,7 +100,9 @@ const githubLogin = asyncHandler(async (req: Request, res: Response) => {
         gender: true,
         password: true,
       },
-    });
+    })
+  : null;
+
 
     let responsePayload: ResponsePayload;
 
