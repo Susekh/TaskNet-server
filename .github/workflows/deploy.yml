@@ -4,9 +4,6 @@ on: [push]
 jobs:
   deploy:
     runs-on: self-hosted
-    container:
-      image: node:20
-      options: --cpus="0.5"
     steps:
       - uses: actions/checkout@v4
       
@@ -40,12 +37,3 @@ jobs:
           NODEMAILER_USER=${{ secrets.NODEMAILER_USER }}
           NODEMAILER_PASS=${{ secrets.NODEMAILER_PASS }}
           EOF
-      
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Build
-        run: npm run build
-      
-      - name: restart pm2
-        run : pm2 restart tasknet-server
