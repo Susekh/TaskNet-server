@@ -11,8 +11,21 @@ const razorpayment = asyncHandler(async (req: Request, res: Response) => {
     const { projectId } = req.body;
     const user = req.user;
 
+   
+    const existingOrder = await db.order.findFirst({
+      where: {
+        projectId,
+        status: 'created', 
+      },
+    });
+
+    if (existingOrder) {
+      return res.json({ ...existingOrder, keyId: process.env.RAZOR_KEY_ID });
+    }
+
+    
     const order = await razorInstance.orders.create({
-      amount: 70000,
+      amount: 70000, 
       currency: "INR",
       receipt: "receipt",
       notes: {
@@ -22,6 +35,7 @@ const razorpayment = asyncHandler(async (req: Request, res: Response) => {
       },
     });
 
+   
     const savedOrder = await db.order.create({
       data: {
         projectId,
@@ -34,10 +48,12 @@ const razorpayment = asyncHandler(async (req: Request, res: Response) => {
       },
     });
 
+    
     res.json({ ...savedOrder, keyId: process.env.RAZOR_KEY_ID });
+
   } catch (error) {
-    res.json({ msg: "server error." });
-    console.log(error);
+    res.status(500).json({ msg: "Server error." });
+    console.error(error);
   }
 });
 
@@ -101,7 +117,7 @@ export const razorWebhook = async (req: Request, res: Response) => {
         </div>
       `;
 
-      await sendMail(recipientEmail, subject, html);
+      sendMail(recipientEmail, subject, html);
     };
 
     if (req.body.event === "payment.failed") {

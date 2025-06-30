@@ -48,8 +48,27 @@ const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
 
     const resetLink = `${process.env.FRONTEND_URI}/auth/reset-password/${resetToken}`;
 
-    const mailHtml = `<p>You requested a password reset</p> 
-                            <p>Click <a target="_blank" href="${resetLink}">here</a> to reset your password</p>`;
+    const mailHtml = `
+      <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+        <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <h2 style="color: #333;">Password Reset Request</h2>
+          <p style="color: #555; font-size: 16px;">
+            You recently requested to reset your password for your TaskNet account. Click the button below to proceed:
+          </p>
+          <p style="text-align: center; margin: 30px 0;">
+            <a href="${resetLink}" target="_blank" style="background-color: #007BFF; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-size: 16px;">
+              Reset Password
+            </a>
+          </p>
+          <p style="color: #888; font-size: 14px;">
+            If you didn’t request this, please ignore this email or contact TaskNet support.
+          </p>
+          <p style="color: #bbb; font-size: 12px; text-align: center; margin-top: 40px;">
+            © ${new Date().getFullYear()} TaskNet. All rights reserved.
+          </p>
+        </div>
+      </div>
+    `;
 
     if (!user.email) {
       throw new ApiError(400, "failed");
