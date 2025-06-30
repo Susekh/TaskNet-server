@@ -93,6 +93,22 @@ model Member {
   @@index([projectId])
 }
 
+enum OrderStatus {
+  created
+  attempted
+  paid
+}
+
+model Order {
+  id String @id @default(uuid())
+  projectId String @unique
+  orderID String @unique
+  status String @default("created")
+  amount Int
+  currency String
+  receipt String?
+  notes Json
+}
 
 model Sprint {
   id        String      @id @default(uuid())

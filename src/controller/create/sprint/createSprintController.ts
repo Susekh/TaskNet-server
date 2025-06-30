@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from "uuid";
 const createSprintController = asyncHandler(async (req, res) => {
   const { projectId, name, startDate, endDate } = req.body;
 
-  // Basic validation
   if (!projectId || !name || !startDate || !endDate) {
     return res.status(400).json({
       status: "failed",
@@ -22,7 +21,6 @@ const createSprintController = asyncHandler(async (req, res) => {
   }
 
   try {
-    // Fetch project and its sprint count
     const project = await db.project.findUnique({
       where: { id: projectId },
       include: {
@@ -38,7 +36,39 @@ const createSprintController = asyncHandler(async (req, res) => {
       });
     }
 
-    // Enforcing limit for non-Pro projects
+    const member = await db.member.findFirst({
+      where: {
+        userId: req.user?.id,
+        projectId,
+      },
+    });
+
+    if (!member) {
+      return res.status(403).json({
+        status: "failed",
+        statusCode: 403,
+        errMsgs: {
+          otherErr: {
+            isErr: true,
+            msg: "You are not a member of this project.",
+          },
+        },
+      });
+    }
+
+    if (member.role === "CONTRIBUTER") {
+      return res.status(403).json({
+        status: "failed",
+        statusCode: 403,
+        errMsgs: {
+          otherErr: {
+            isErr: true,
+            msg: "Contributors are not allowed to create sprints.",
+          },
+        },
+      });
+    }
+
     if (!project.isPro && project.sprints.length >= 5) {
       return res.status(403).json({
         status: "failed",
@@ -52,7 +82,6 @@ const createSprintController = asyncHandler(async (req, res) => {
       });
     }
 
-    // Create the sprint
     const sprint = await db.sprint.create({
       data: {
         id: uuidv4(),

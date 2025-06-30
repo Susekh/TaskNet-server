@@ -36,6 +36,7 @@ const inviteToProjectsController = asyncHandler(async (req: Request, res: Respon
       data: {
         userId,
         projectId: project.id,
+        role : "CONTRIBUTER"
       },
     });
 

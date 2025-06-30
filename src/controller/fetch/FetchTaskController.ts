@@ -4,7 +4,7 @@ import db from "../../utils/db/db.js";
 
 const FetchTaskController = asyncHandler(async (req: Request, res: Response) => {
   const { taskId } = req.body;
-  const userId = req.user?.id; // Assuming req.user is populated via auth middleware
+  const userId = req.user?.id;
 
   if (!taskId) {
     return res.status(400).json({
@@ -15,7 +15,7 @@ const FetchTaskController = asyncHandler(async (req: Request, res: Response) => 
   }
 
   try {
-    // Fetch Task with related data including project members
+    
     const task = await db.task.findUnique({
       where: { id: taskId },
       include: {
@@ -37,7 +37,7 @@ const FetchTaskController = asyncHandler(async (req: Request, res: Response) => 
               include: {
                 project: {
                   include: {
-                    members: true, // This gives access to userId of each member
+                    members: true, 
                   },
                 },
               },
@@ -55,7 +55,7 @@ const FetchTaskController = asyncHandler(async (req: Request, res: Response) => 
       });
     }
 
-    // Check if user is a member of the project
+    
     const projectMembers = task.column.sprint.project.members;
     const isUserMember = projectMembers.some(
       (member) => member.userId === userId

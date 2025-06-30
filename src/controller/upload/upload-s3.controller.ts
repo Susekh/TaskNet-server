@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../../utils/apiError.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
+import s3 from "../../utils/s3.js";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import asyncHandler from "../../utils/asyncHanlder.js";
 
 // Extend Express.Multer.File to include S3 fields you use
@@ -85,8 +87,6 @@ const uploadMultipleFiles = asyncHandler(async (req: Request, res: Response, nex
   }
 });
 
-import s3 from "../../utils/s3.js"; // AWS S3 client
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const deleteFile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   try {
