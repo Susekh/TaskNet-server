@@ -101,7 +101,7 @@ enum OrderStatus {
 
 model Order {
   id String @id @default(uuid())
-  projectId String @unique
+  projectId String
   orderID String @unique
   status String @default("created")
   amount Int

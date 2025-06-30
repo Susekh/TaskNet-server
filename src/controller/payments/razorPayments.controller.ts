@@ -70,9 +70,8 @@ export const razorWebhook = async (req: Request, res: Response) => {
     };
 
     if (req.body.event === "payment.failed") {
-      await db.order.update({
-        where: { orderID: paymentdetails.order_id },
-        data: { status: "failed" },
+      await db.order.delete({
+        where: { orderID: paymentdetails.order_id }
       });
     }
 
