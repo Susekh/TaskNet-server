@@ -36,4 +36,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           NODEMAILER_USER=${{ secrets.NODEMAILER_USER }}
           NODEMAILER_PASS=${{ secrets.NODEMAILER_PASS }}
+          RAZOR_KEY_ID=${{secrets.RAZOR_KEY_ID}}
+          RAZOR_KEY_SECRET=${{secrets.RAZOR_KEY_SECRET}}
+          RAZOR_WEBHOOK_SECRET=${{secrets. RAZOR_WEBHOOK_SECRET}}
           EOF
