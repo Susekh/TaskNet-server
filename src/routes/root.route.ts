@@ -9,7 +9,7 @@ import AddProfilesRouter from "./addProfiles/AddProfilesRouter.js"
 import uploadRouter from "./upload/upload.route.js"
 import paymentsRouter from "./payments/razorPayment.route.js"
 import { verifyJWTForProfile } from "../middleware/verifyJWTForProfile.js";
-
+import genaiRouter from "./genai/gemini.route.js"
 const router = Router();
 
 router.get("/", (req, res) => {
@@ -25,5 +25,6 @@ router.use("/update", verifyJWTForProfile, updateRouter);
 router.use("/add-profiles", AddProfilesRouter);
 router.use("/payment", paymentsRouter);
 router.use("/upload", verifyJWTForProfile, uploadRouter);
+router.use("/genai", verifyJWTForProfile, genaiRouter)
 
 export default router;

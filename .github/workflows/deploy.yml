@@ -38,5 +38,6 @@ jobs:
           NODEMAILER_PASS=${{ secrets.NODEMAILER_PASS }}
           RAZOR_KEY_ID=${{secrets.RAZOR_KEY_ID}}
           RAZOR_KEY_SECRET=${{secrets.RAZOR_KEY_SECRET}}
-          RAZOR_WEBHOOK_SECRET=${{secrets. RAZOR_WEBHOOK_SECRET}}
+          RAZOR_WEBHOOK_SECRET=${{secrets.RAZOR_WEBHOOK_SECRET}}
+          GEMINI_API_KEY=${{secrets.GEMINI_API_KEY}}
           EOF
