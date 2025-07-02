@@ -1,11 +1,11 @@
 import { Router } from "express";
 import singUpValidation from "../middleware/signUpValidation.js";
-import singUpController from "../controller/auth/singUpController.js";
+import singUpController from "../controller/auth/singUp.controller.js";
 import singInValidation from "../middleware/signInValidation.js";
-import singInController from "../controller/auth/signInController.js";
+import singInController from "../controller/auth/signIn.controller.js";
 import { verifyJWT } from "../middleware/verifyJWT.js";
-import logoutController from "../controller/auth/logOutController.js";
-import isAuthenticatedController from "../controller/auth/isAuthenticatedController.js";
+import logoutController from "../controller/auth/logOut.controller.js";
+import isAuthenticatedController from "../controller/auth/isAuthenticated.controller.js";
 import oAuthRoutes from "./oAuthRoutes.js";
 import forgotPassword from "../controller/auth/forgotPassword.js";
 import resetPassword from "../controller/auth/resetPassword.js";

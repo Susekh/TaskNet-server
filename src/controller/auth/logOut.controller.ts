@@ -32,7 +32,6 @@ const logout = asyncHandler(
             .clearCookie("refreshToken", options)
             .json({ status : "success", successMsg : "Logged out succesfully" });
     } catch (error) {
-        // Handle any errors
         return res.status(500).json({ status : "failed", errMsgs : { otherErr : "Error occured at loggin out user."} });
     }
 });

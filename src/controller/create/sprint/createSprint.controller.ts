@@ -9,12 +9,33 @@ const createSprintController = asyncHandler(async (req, res) => {
     return res.status(400).json({
       status: "failed",
       statusCode: 400,
+      msg: "Missing required fields.",
       errMsgs: {
         formErr: [
-          { field: "projectId", isErr: true, msg: "Project ID is required." },
-          { field: "name", isErr: true, msg: "Sprint name is required." },
-          { field: "startDate", isErr: true, msg: "Start date is required." },
-          { field: "endDate", isErr: true, msg: "End date is required." },
+          { field: "projectId", isErr: !projectId, msg: "Project ID is required." },
+          { field: "name", isErr: !name, msg: "Sprint name is required." },
+          { field: "startDate", isErr: !startDate, msg: "Start date is required." },
+          { field: "endDate", isErr: !endDate, msg: "End date is required." },
+        ],
+      },
+    });
+  }
+
+  // ✅ Validate date order
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (end < start) {
+    return res.status(400).json({
+      status: "failed",
+      statusCode: 400,
+      msg: "End date must not be earlier than start date.",
+      errMsgs: {
+        formErr: [
+          {
+            field: "endDate",
+            isErr: true,
+            msg: "End date cannot be earlier than start date.",
+          },
         ],
       },
     });
@@ -32,6 +53,7 @@ const createSprintController = asyncHandler(async (req, res) => {
       return res.status(404).json({
         status: "failed",
         statusCode: 404,
+        msg: "Project not found.",
         errMsgs: { otherErr: { isErr: true, msg: "Project not found." } },
       });
     }
@@ -47,6 +69,7 @@ const createSprintController = asyncHandler(async (req, res) => {
       return res.status(403).json({
         status: "failed",
         statusCode: 403,
+        msg: "You are not a member of this project.",
         errMsgs: {
           otherErr: {
             isErr: true,
@@ -60,6 +83,7 @@ const createSprintController = asyncHandler(async (req, res) => {
       return res.status(403).json({
         status: "failed",
         statusCode: 403,
+        msg: "Contributors are not allowed to create sprints.",
         errMsgs: {
           otherErr: {
             isErr: true,
@@ -73,6 +97,7 @@ const createSprintController = asyncHandler(async (req, res) => {
       return res.status(403).json({
         status: "failed",
         statusCode: 403,
+        msg: "Sprint limit reached for free projects.",
         errMsgs: {
           otherErr: {
             isErr: true,
@@ -86,16 +111,16 @@ const createSprintController = asyncHandler(async (req, res) => {
       data: {
         id: uuidv4(),
         name,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
+        startDate: start,
+        endDate: end,
         projectId,
       },
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       status: "success",
       statusCode: 201,
-      message: "Sprint created successfully.",
+      msg: "Sprint created successfully.",
       sprint,
     });
 
@@ -104,9 +129,10 @@ const createSprintController = asyncHandler(async (req, res) => {
 
     const message = error instanceof Error ? error.message : "Unknown server error";
 
-    res.status(500).json({
+    return res.status(500).json({
       status: "failed",
       statusCode: 500,
+      msg: "An error occurred while creating the sprint.",
       errMsgs: {
         otherErr: { isErr: true, msg: `Server Error: ${message}` },
       },

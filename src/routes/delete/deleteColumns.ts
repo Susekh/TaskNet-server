@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { verifyJWTForProfile } from "../../middleware/verifyJWTForProfile.js";
-import deleteColumnController from "../../controller/delete/sprint/column/deleteColumnController.js";
+import deleteColumnController from "../../controller/delete/sprint/column/deleteColumn.controller.js";
 
 const router = Router();
 

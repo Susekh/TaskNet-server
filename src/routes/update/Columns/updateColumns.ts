@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 import { verifyJWTForProfile } from "../../../middleware/verifyJWTForProfile.js";
-import updateColName from "../../../controller/update/sprint/column/updateColNameController.js";
+import updateColName from "../../../controller/update/sprint/column/updateColName.controller.js";
 
 const router = Router();
 router.use(verifyJWTForProfile);

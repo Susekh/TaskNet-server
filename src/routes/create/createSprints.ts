@@ -1,5 +1,5 @@
 import { Router } from "express";
-import createSprintController from "../../controller/create/sprint/createSprintController.js";
+import createSprintController from "../../controller/create/sprint/createSprint.controller.js";
 import { verifyJWTForProfile } from "../../middleware/verifyJWTForProfile.js";
 
 const router = Router();

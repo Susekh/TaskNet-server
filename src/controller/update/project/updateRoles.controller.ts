@@ -5,27 +5,18 @@ import { MemberRole } from "@prisma/client";
 
 type RoleUpdateBody = {
   memberId: string;
-  newRole: "ADMIN" | "MODERATOR" | "CONTRIBUTOR";
+  newRole: "ADMIN" | "MODERATOR" | "CONTRIBUTER";
 };
-
-// Role hierarchy for validation
-const ROLE_HIERARCHY = {
-  ADMIN: 3,
-  MODERATOR: 2,
-  CONTRIBUTOR: 1,
-} as const;
 
 const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
   const { memberId, newRole }: RoleUpdateBody = req.body;
   const userId = req.user?.id;
 
-  console.log("Update Role Request Body:", req.body);
-
-  // Basic validation
   if (!memberId || !newRole) {
     return res.status(400).json({
       status: "failed",
       statusCode: 400,
+      msg: "Required fields missing in request.",
       errMsgs: {
         memberId: {
           isErr: !memberId,
@@ -39,26 +30,26 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Validate role format
-  const validRoles = ["ADMIN", "MODERATOR", "CONTRIBUTOR"] as const;
+  const validRoles = ["ADMIN", "MODERATOR", "CONTRIBUTER"] as const;
   if (!validRoles.includes(newRole as any)) {
     return res.status(400).json({
       status: "failed",
       statusCode: 400,
+      msg: "Invalid role specified.",
       errMsgs: {
         newRole: {
           isErr: true,
-          msg: "Invalid role specified. Must be ADMIN, MODERATOR, or CONTRIBUTOR.",
+          msg: "Invalid role specified. Must be ADMIN, MODERATOR, or CONTRIBUTER.",
         },
       },
     });
   }
 
-  // Validate user authentication
   if (!userId) {
     return res.status(401).json({
       status: "failed",
       statusCode: 401,
+      msg: "Authentication required.",
       errMsgs: {
         auth: {
           isErr: true,
@@ -69,7 +60,6 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
   }
 
   try {
-    // Find the target member with comprehensive data
     const targetMember = await db.member.findUnique({
       where: { id: memberId },
       include: {
@@ -102,6 +92,7 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
       return res.status(404).json({
         status: "failed",
         statusCode: 404,
+        msg: "Member not found.",
         errMsgs: {
           memberId: {
             isErr: true,
@@ -111,7 +102,6 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
       });
     }
 
-    // Find the acting member (person making the request)
     const actingMember = targetMember.project.members.find(
       (member) => member.user.id === userId
     );
@@ -120,6 +110,7 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
       return res.status(403).json({
         status: "failed",
         statusCode: 403,
+        msg: "You are not a member of this project.",
         errMsgs: {
           permission: {
             isErr: true,
@@ -129,11 +120,11 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
       });
     }
 
-    // Prevent self-role modification
     if (targetMember.userId === userId) {
       return res.status(403).json({
         status: "failed",
         statusCode: 403,
+        msg: "You cannot change your own role.",
         errMsgs: {
           permission: {
             isErr: true,
@@ -143,11 +134,11 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
       });
     }
 
-    // Check if acting member has permission to change roles
     if (actingMember.role !== "ADMIN") {
       return res.status(403).json({
         status: "failed",
         statusCode: 403,
+        msg: "Only ADMINs can change member roles.",
         errMsgs: {
           permission: {
             isErr: true,
@@ -157,39 +148,6 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
       });
     }
 
-    // Hierarchy validation: Prevent demoting someone of equal or higher rank
-    const actingMemberLevel = ROLE_HIERARCHY[actingMember.role as keyof typeof ROLE_HIERARCHY];
-    const targetMemberLevel = ROLE_HIERARCHY[targetMember.role as keyof typeof ROLE_HIERARCHY];
-    const newRoleLevel = ROLE_HIERARCHY[newRole];
-
-    if (targetMemberLevel >= actingMemberLevel) {
-      return res.status(403).json({
-        status: "failed",
-        statusCode: 403,
-        errMsgs: {
-          permission: {
-            isErr: true,
-            msg: "You cannot modify the role of someone with equal or higher privileges.",
-          },
-        },
-      });
-    }
-
-    // Prevent promoting someone to a role equal to or higher than your own
-    if (newRoleLevel >= actingMemberLevel) {
-      return res.status(403).json({
-        status: "failed",
-        statusCode: 403,
-        errMsgs: {
-          permission: {
-            isErr: true,
-            msg: "You cannot promote someone to a role equal to or higher than your own.",
-          },
-        },
-      });
-    }
-
-    // Admin protection: Ensure at least one admin remains
     if (targetMember.role === "ADMIN" && newRole !== "ADMIN") {
       const adminCount = targetMember.project.members.filter(
         (member) => member.role === "ADMIN"
@@ -199,6 +157,7 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
         return res.status(409).json({
           status: "failed",
           statusCode: 409,
+          msg: "Cannot remove the last admin from the project.",
           errMsgs: {
             business: {
               isErr: true,
@@ -209,11 +168,25 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
       }
     }
 
-    // No-op if role is already set
+    if (targetMember.role === "ADMIN" && newRole !== "ADMIN" && targetMember.userId === userId) {
+      return res.status(403).json({
+        status: "failed",
+        statusCode: 403,
+        msg: "You cannot demote yourself as an admin.",
+        errMsgs: {
+          permission: {
+            isErr: true,
+            msg: "You cannot demote yourself as an admin.",
+          },
+        },
+      });
+    }
+
     if (targetMember.role === newRole) {
       return res.status(200).json({
         status: "success",
         statusCode: 200,
+        msg: `Member already has role '${newRole}'`,
         message: `No change required — member already has role '${newRole}'`,
         data: {
           memberId: targetMember.id,
@@ -224,9 +197,7 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
       });
     }
 
-    // Perform the role update within a transaction for data integrity
     const updatedMember = await db.$transaction(async (tx) => {
-      // Double-check the member still exists and hasn't changed
       const currentMember = await tx.member.findUnique({
         where: { id: memberId },
         select: { id: true, role: true, userId: true },
@@ -236,10 +207,9 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
         throw new Error("Member state has changed during update");
       }
 
-      // Update the role
       return await tx.member.update({
         where: { id: memberId },
-        data: { 
+        data: {
           role: newRole as MemberRole,
           updatedAt: new Date(),
         },
@@ -260,23 +230,20 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
       });
     });
 
-    console.log(`Role update successful: ${targetMember.user.email} changed from ${targetMember.role} to ${newRole} in project ${targetMember.project.name}`);
-
     return res.status(200).json({
       status: "success",
       statusCode: 200,
+      msg: `Member role updated to ${newRole}`,
       message: `Member role successfully updated from ${targetMember.role} to ${newRole}`,
     });
 
   } catch (error) {
-    console.error("Error updating member role:", error);
-    
-    // Handle specific database constraint errors
     if (error instanceof Error) {
       if (error.message.includes("Member state has changed")) {
         return res.status(409).json({
           status: "failed",
           statusCode: 409,
+          msg: "Member role was modified by another process.",
           errMsgs: {
             concurrency: {
               isErr: true,
@@ -290,6 +257,7 @@ const updateMemberRole = asyncHandler(async (req: Request, res: Response) => {
     return res.status(500).json({
       status: "failed",
       statusCode: 500,
+      msg: "Unexpected server error occurred.",
       errMsgs: {
         server: {
           isErr: true,

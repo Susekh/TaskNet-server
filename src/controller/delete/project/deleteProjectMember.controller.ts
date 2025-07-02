@@ -11,10 +11,9 @@ const deleteProjectMemberController = asyncHandler(async (req, res) => {
       statusCode: 400,
       message: "Member ID is required.",
     });
-  }
+  };
 
   try {
-    // Get the member to be deleted
     const targetMember = await db.member.findUnique({
       where: { id: memberId },
       include: { project: true },
@@ -53,15 +52,35 @@ const deleteProjectMemberController = asyncHandler(async (req, res) => {
       });
     }
 
-    if (requestingMember.role !== "ADMIN" || requestingMember.id === memberId) {
+    const isSelf = requestingMember.id === memberId;
+    const isTargetContributor = targetMember.role === "CONTRIBUTER";
+
+    if (requestingMember.role === "ADMIN") {
+      // Admins can remove anyone
+    } else if (requestingMember.role === "MODERATOR") {
+      if (!(isSelf || isTargetContributor)) {
+        return res.status(403).json({
+          status: "failed",
+          statusCode: 403,
+          message: "Moderators can only remove themselves or contributors.",
+        });
+      }
+    } else if (requestingMember.role === "CONTRIBUTER") {
+      if (!isSelf) {
+        return res.status(403).json({
+          status: "failed",
+          statusCode: 403,
+          message: "Contributors can only remove themselves.",
+        });
+      }
+    } else {
       return res.status(403).json({
         status: "failed",
         statusCode: 403,
-        message: "You do not have permission to remove this member.",
+        message: "Invalid role.",
       });
     }
 
-    // Delete the member
     await db.member.delete({ where: { id: memberId } });
 
     return res.status(200).json({

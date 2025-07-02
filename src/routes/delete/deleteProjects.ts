@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { verifyJWTForProfile } from "../../middleware/verifyJWTForProfile.js";
-import deleteProjectController from "../../controller/delete/project/deleteProjectController.js";
-import deleteProjectMemberController from "../../controller/delete/project/deleteProjectMemberController.js";
+import deleteProjectController from "../../controller/delete/project/deleteProject.controller.js";
+import deleteProjectMemberController from "../../controller/delete/project/deleteProjectMember.controller.js";
 
 const router = Router();
 

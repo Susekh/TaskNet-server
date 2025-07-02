@@ -3,7 +3,7 @@ import asyncHandler from "../../../utils/asyncHanlder.js";
 import db from "../../../utils/db/db.js";
 import getGoogleOauthTokens from "../../../utils/getGoogleOauthTokens.js";
 import jwt from "jsonwebtoken";
-import { generateAccessAndRefereshTokens } from "../signInController.js";
+import { generateAccessAndRefereshTokens } from "../signIn.controller.js";
 import generatePasswords from "../../../utils/generatePasswords.js";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
