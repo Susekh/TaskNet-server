@@ -40,4 +40,5 @@ jobs:
           RAZOR_KEY_SECRET=${{secrets.RAZOR_KEY_SECRET}}
           RAZOR_WEBHOOK_SECRET=${{secrets.RAZOR_WEBHOOK_SECRET}}
           GEMINI_API_KEY=${{secrets.GEMINI_API_KEY}}
+          SUPPORT_EMAIL=${{secrets.SUPPORT_EMAIL}}
           EOF
