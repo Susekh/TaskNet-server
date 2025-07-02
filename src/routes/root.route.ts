@@ -26,6 +26,6 @@ router.use("/add-profiles", AddProfilesRouter);
 router.use("/payment", paymentsRouter);
 router.use("/upload", verifyJWTForProfile, uploadRouter);
 router.use("/genai", verifyJWTForProfile, genaiRouter);
-router.use("/contact", contactUs);
+router.post("/contact", contactUs);
 
 export default router;
