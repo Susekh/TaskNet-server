@@ -14,6 +14,7 @@ TaskNet Server is the backend for the **TaskNet** productivity tool. It powers u
 
 ## Tech Stack
 - **Node.js** / **Express.js**
+- **Prisma ORM**
 - **PostgreSQL**
 - **WebSockets** (for real-time updates)
 - **Razorpay API**
@@ -21,6 +22,13 @@ TaskNet Server is the backend for the **TaskNet** productivity tool. It powers u
 - **AWS EC2**, **S3**, **NGINX**
 - **OAuth & JWT Authentication**
 - **GitHub Actions** (for CI/CD)
+
+## 🗂️ Database Schema
+
+Here is the Entity Relationship Diagram (ERD) of the database:
+
+![Database ER Diagram](./prisma/ERD.svg)
+
 
 If you find it helpful, feel free to check out the [TaskNet Client](https://github.com/Susekh/TaskNest-client) as well!
 

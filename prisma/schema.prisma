@@ -251,3 +251,7 @@ model DirectMessage {
   @@index([memberId])
   @@index([conversationId])
 }
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+}

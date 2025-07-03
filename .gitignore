@@ -1,6 +1,18 @@
-node_modules
+# Node modules
+node_modules/
+
+# Environment variables
 .env
-dist
-.idea
+
+# Build output
+dist/
+
+# JetBrains IDE settings
+.idea/
+
+# Prisma schema backups
 prismaBackup.txt
-prisma\prismaBackup.txt
+prisma/prismaBackup.txt
+
+# DBML output directory
+prisma/dbml/
