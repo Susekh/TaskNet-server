@@ -19,10 +19,10 @@ router.get("/", (req, res) => {
 router.use("/auth", AuthRouter);
 router.use("/profile", ProfileRouter);
 router.use("/create", createRouter);
-router.use("/fetch", fetchRouter)
+router.use("/fetch", verifyJWTForProfile, fetchRouter)
 router.use("/delete", deleteRouter);
 router.use("/update", verifyJWTForProfile, updateRouter);
-router.use("/add-profiles", AddProfilesRouter);
+router.use("/add-profiles",verifyJWTForProfile, AddProfilesRouter);
 router.use("/payment", paymentsRouter);
 router.use("/upload", verifyJWTForProfile, uploadRouter);
 router.use("/genai", verifyJWTForProfile, genaiRouter);

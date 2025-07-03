@@ -1,7 +1,7 @@
 import { Router } from "express";
-import editDetails from "../controller/Profile/editDetails.js";
-import editPassword from "../controller/Profile/editPassword.js";
 import { verifyJWTForProfile } from "../middleware/verifyJWTForProfile.js";
+import editDetails from "../controller/Profile/editDetails.controller.js";
+import editPassword from "../controller/Profile/editPassword.controller.js";
 
 const router = Router();
 

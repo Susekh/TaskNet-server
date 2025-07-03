@@ -1,14 +1,14 @@
 import { Router } from "express";
 import singUpValidation from "../middleware/signUpValidation.js";
-import singUpController from "../controller/auth/singUp.controller.js";
 import singInValidation from "../middleware/signInValidation.js";
-import singInController from "../controller/auth/signIn.controller.js";
 import { verifyJWT } from "../middleware/verifyJWT.js";
-import logoutController from "../controller/auth/logOut.controller.js";
-import isAuthenticatedController from "../controller/auth/isAuthenticated.controller.js";
 import oAuthRoutes from "./oAuthRoutes.js";
-import forgotPassword from "../controller/auth/forgotPassword.js";
-import resetPassword from "../controller/auth/resetPassword.js";
+import singInController from "../controller/auth/signIn.controller.js";
+import singUpController from "../controller/auth/singUp.controller.js";
+import isAuthenticatedController from "../controller/auth/isAuthenticated.controller.js";
+import forgotPassword from "../controller/auth/forgotPassword.controller.js";
+import resetPassword from "../controller/auth/resetPassword.controller.js";
+import logoutController from "../controller/auth/logOut.controller.js";
 
 
 const router = Router();

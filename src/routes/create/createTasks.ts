@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { verifyJWTForProfile } from "../../middleware/verifyJWTForProfile.js";
-import createTaskController from "../../controller/create/sprint/column/task/createTaskController.js";
-import moveTaskInColumnController from "../../controller/create/sprint/column/task/moveTaskInColumnController.js";
+import createTaskController from "../../controller/create/sprint/column/task/createTask.controller.js";
+import moveTaskInColumnController from "../../controller/create/sprint/column/task/moveTaskInColumn.controller.js";
 
 const router = Router();
 

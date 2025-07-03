@@ -1,11 +1,10 @@
 import { Router } from "express";
-import { verifyJWTForProfile } from "../../middleware/verifyJWTForProfile.js";
-import deleteTaskController from "../../controller/delete/sprint/column/task/deleteTaskController.js";
-import removeTaskMemberController from "../../controller/delete/sprint/column/task/members/removeTaskMembersController.js";
+import deleteTaskController from "../../controller/delete/sprint/column/task/deleteTask.controller.js";
+import removeTaskMemberController from "../../controller/delete/sprint/column/task/members/removeTaskMembers.controller.js";
 
 const router = Router();
 
-router.post("/delete-tasks", verifyJWTForProfile, deleteTaskController);
-router.post("/remove-member", verifyJWTForProfile, removeTaskMemberController);
+router.post("/delete-tasks", deleteTaskController);
+router.post("/remove-member", removeTaskMemberController);
 
 export default router;
