@@ -45,7 +45,6 @@ model  Project{
   imageUrl String @db.Text
   inviteCode String? @unique
 
-  description String?
 
   userId String
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
